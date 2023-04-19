@@ -12,16 +12,18 @@
 #ifndef __HASH_FUNCTIONS_H
 #define __HASH_FUNCTIONS_H
 
-size_t hash_always_one(const char* str);
+#include <stdint.h>
 
-size_t hash_first_char(const char* str);
+uint64_t hash_always_one(const char* str);
 
-size_t hash_strlen    (const char* str);
+uint64_t hash_first_char(const char* str);
 
-size_t hash_ror_xor   (const char* str);
+uint64_t hash_strlen    (const char* str);
 
-size_t hash_rol_xor   (const char* str);
+uint64_t hash_ror_xor   (const char* str);
 
-size_t hash_custom    (const char* str);
+uint64_t hash_rol_xor   (const char* str);
+
+uint64_t hash_custom    (const char* str);
 
 #endif /* hash_functions.h */

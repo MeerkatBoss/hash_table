@@ -13,7 +13,6 @@
 
 static void mark_free(HashTableEntry* entries, size_t entry_count);
 static int try_grow(HashTable* table);
-static void try_shrink(HashTable* table);
 
 __always_inline
 static size_t round_to_pow2(size_t x)
@@ -218,8 +217,6 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
 
     table->free = key_entry;
     
-    try_shrink(table);
-    
     return 0;
 }
 
@@ -241,3 +238,56 @@ int hash_table_get_key_count(const HashTable* table, const char* key)
     return key_entry ? key_entry->count : 0;
 }
 
+static void mark_free(HashTableEntry* entries, size_t entry_count)
+{
+    for (size_t i = 0; i < entry_count; ++i)
+    {
+        entries[i].is_free = 1;
+        entries[i].next = i + 1 < endry_count
+                            ? entries + i + 1
+                            : NULL;
+    }
+}
+
+
+static int try_grow(HashTable* table)
+{
+    const size_t cap_growth = 2;
+    if (table->free) return 0;
+
+    const intptr_t old_addr = (intptr_t) table->buckets;
+
+    const size_t old_cap = table->capacity;
+    const size_t new_cap = old_cap * cap_growth;
+    HashTableEntry* data = NULL;
+
+    SAFE_BLOCK_START
+    {
+        ASSERT_SIMPLE(
+                data = realloc(table->buckets, new_cap*sizeof(*data)),
+                action_result != NULL);
+    }
+    SAFE_BLOCK_HANDLE_ERRORS
+    {
+        // TODO: Logs
+        return -1;
+    }
+    SAFE_BLOCK_END
+
+    const intptr_t new_addr = (intptr_t) data;
+    const intptr_t addr_offset = new_addr - old_addr;
+
+    /* Update addresses */
+    if (addr_offset)
+        for (size_t i = 0; i < old_cap; ++i)
+            data[i].next = (HashTableEntry*)
+                                    ( (char*)data[i].next + addr_offset );
+
+    mark_free(data + old_cap, new_cap - old_cap);
+
+    table->buckets = data;
+    table->free = data + old_cap;
+    table->capacity = new_cap;
+
+    return 0;
+}
