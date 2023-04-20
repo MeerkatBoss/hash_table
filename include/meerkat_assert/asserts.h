@@ -61,7 +61,7 @@ struct assert_failed_data
     assertion_info.message = msg;                                   \
 } while (0)
 #else
-#define __FILL_ASSERT_DATA(action, condition)
+#define __FILL_ASSERT_DATA(...)
 #endif
 
 #define ASSERT_MESSAGE_CALLBACK(action, condition, message, callback) { \

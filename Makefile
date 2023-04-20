@@ -14,7 +14,7 @@ CWARN:=-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
 -Wno-narrowing -Wno-old-style-cast -Wno-varargs -Wstack-protector\
 -Wlarger-than=8192 -Wstack-usage=8192
 
-CDEBUG:=-D _DEBUG -ggdb3 -fcheck-new -fsized-deallocation -fstack-protector\
+CDEBUG:=-ggdb3 -fcheck-new -fsized-deallocation -fstack-protector\
 -fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer\
 -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,${strip \
 }float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,${strip \
@@ -26,10 +26,16 @@ CMACHINE:=-mavx512f -mavx512bw
 CFLAGS:=-std=c++2a -fPIE -pie $(CMACHINE) $(CWARN)
 BUILDTYPE?=Debug
 
+HASH_FUNC:=hash_always_one
+
+DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
+
 ifeq ($(BUILDTYPE), Release)
 	CFLAGS:=-O2 $(CFLAGS)
+	DEFFLAGS:=-DNDEBUG -DNO_VERBOSE_ASSERTS -DSUPPRESS_LOGS $(DEFFLAGS)
 else
 	CFLAGS:=-O0 $(CDEBUG) $(CFLAGS)
+	DEFFLAGS:=-D_DEBUG $(DEFFLAGS)
 endif
 
 PROJECT	:= hash_table
@@ -82,12 +88,12 @@ build_lib: $(OBJECTS)
 # Build test objects
 $(OBJDIR)/$(TESTDIR)/%.$(OBJEXT): $(TESTDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) $(INCFLAGS) -I$(TESTDIR) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCFLAGS) $(DEFFLAGS) -I$(TESTDIR) -c $< -o $@
 
 # Build source objects
 $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCFLAGS) $(DEFFLAGS) -c $< -o $@
 
 # Build project binary
 $(BINDIR)/$(PROJECT): $(OBJECTS)

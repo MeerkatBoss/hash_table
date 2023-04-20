@@ -2,7 +2,7 @@
 
 #include "hash_functions.h"
 
-uint64_t hash_always_one(const char* str)
+uint64_t hash_always_one(const char* str __attribute((unused)))
 {
     return 0;
 }
@@ -63,12 +63,16 @@ uint64_t hash_custom(const char* str)
 
     uint64_t hash = seed ^ (len * mult);
 
-    const uint64_t* data = (const uint64_t *)key;
+    const uint64_t* data = (const uint64_t *)str;
     const uint64_t* end  = data + (len/8);
 
     while(data != end)
     {
-        uint64_t cur_sym = *(data++);
+        uint64_t cur_sym = 0;
+        if ((intptr_t) data & 7)
+            memcpy(&cur_sym, data++, sizeof(cur_sym));
+        else
+            cur_sym = *(data++);
 
         cur_sym *= mult; 
         cur_sym ^= cur_sym >> shift; 
@@ -83,20 +87,20 @@ uint64_t hash_custom(const char* str)
     switch(len & 7) // Loop optimization
     {
     case 7: hash ^= uint64_t(char_data[6]) << 48;
-            [[fallthrough]]
+            /* fall through */
     case 6: hash ^= uint64_t(char_data[5]) << 40;
-            [[fallthrough]]
+            /* fall through */
     case 5: hash ^= uint64_t(char_data[4]) << 32;
-            [[fallthrough]]
+            /* fall through */
     case 4: hash ^= uint64_t(char_data[3]) << 24;
-            [[fallthrough]]
+            /* fall through */
     case 3: hash ^= uint64_t(char_data[2]) << 16;
-            [[fallthrough]]
+            /* fall through */
     case 2: hash ^= uint64_t(char_data[1]) << 8;
-            [[fallthrough]]
+            /* fall through */
     case 1: hash ^= uint64_t(char_data[0]);
             hash *= mult;
-            [[fallthrough]]
+            /* fall through */
     default: break;
     };
 

@@ -87,6 +87,6 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key);
  *
  * @return Counter value
  */
-int hash_table_get_key_count(const HashTable* table, const char* key);
+size_t hash_table_get_key_count(const HashTable* table, const char* key);
 
 #endif /* hash_table.h */

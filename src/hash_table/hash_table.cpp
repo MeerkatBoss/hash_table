@@ -3,7 +3,7 @@
 
 #include "meerkat_assert/asserts.h"
 
-#include "hashes/hash_function.h"
+#include "hashes/hash_functions.h"
 
 #ifndef HASH_FUNCTION
 #define HASH_FUNCTION(key) hash_always_one(key)
@@ -40,7 +40,7 @@ int hash_table_ctor(HashTable* table, const size_t bucket_count)
     SAFE_BLOCK_START
     {
         ASSERT_TRUE(table != NULL);
-        ASSERT_TRUE(is_prime(bucket_count);
+        ASSERT_TRUE(is_prime(bucket_count));
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
@@ -65,6 +65,7 @@ int hash_table_ctor(HashTable* table, const size_t bucket_count)
         errno = ENOMEM;
         return -1;
     }
+    SAFE_BLOCK_END
 
     mark_free(buffer + bucket_count, capacity - bucket_count);
 
@@ -75,17 +76,16 @@ int hash_table_ctor(HashTable* table, const size_t bucket_count)
     table->capacity = capacity;
     table->distinct_count = 0;
     table->total_count = 0;
-    table->max_bucket_size = 0;
 
     return 0;
 }
 
-void hash_table_dtor(HashTable* table)
+int hash_table_dtor(HashTable* table)
 {
     SAFE_BLOCK_START
     {
         ASSERT_TRUE(table != NULL);
-        ASSERT_TRUE(table->buffer != NULL);
+        ASSERT_TRUE(table->buckets != NULL);
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
@@ -95,9 +95,20 @@ void hash_table_dtor(HashTable* table)
     }
     SAFE_BLOCK_END
 
+    for (size_t i = 0; i < table->bucket_count; ++i)
+    {
+        HashTableEntry* entry = table->buckets[i].next;
+        while (entry)
+        {
+            free(entry->key);
+            entry = entry->next;
+        }
+    }
     free(table->buckets);
 
-    memset(table, sizeof(*table), 0);
+    memset(table, 0, sizeof(*table));
+
+    return 0;
 }
 
 int hash_table_key_increment_counter(HashTable* table, const char* key)
@@ -118,7 +129,7 @@ int hash_table_key_increment_counter(HashTable* table, const char* key)
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
 
-    HashTableEntry* key_entry = table->buckets[key_hash]->next;
+    HashTableEntry* key_entry = table->buckets[key_hash].next;
 
     while (key_entry && strcmp(key_entry->key, key) != 0)
         key_entry = key_entry->next;
@@ -176,7 +187,7 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
 
-    HashTableEntry* lst_entry = table->buckets[key_hash];
+    HashTableEntry* lst_entry = &table->buckets[key_hash];
     HashTableEntry* key_entry = lst_entry->next;
 
     while (key_entry && strcmp(key_entry->key, key) != 0)
@@ -205,7 +216,7 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
         return 0;
 
     lst_entry->next = key_entry->next;
-    -- table->buckets[key_hash]->count;
+    -- table->buckets[key_hash].count;
     -- table->distinct_count;
 
     free(key_entry->key);
@@ -220,7 +231,7 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
     return 0;
 }
 
-int hash_table_get_key_count(const HashTable* table, const char* key)
+size_t hash_table_get_key_count(const HashTable* table, const char* key)
 {
     /* If there is no table, it does not contain any keys */
     if (!table || !table->buckets) return 0;
@@ -230,7 +241,7 @@ int hash_table_get_key_count(const HashTable* table, const char* key)
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
 
-    HashTableEntry* key_entry = table->buckets[key_hash]->next;
+    HashTableEntry* key_entry = table->buckets[key_hash].next;
 
     while (key_entry && strcmp(key_entry->key, key) != 0)
         key_entry = key_entry->next;
@@ -243,7 +254,7 @@ static void mark_free(HashTableEntry* entries, size_t entry_count)
     for (size_t i = 0; i < entry_count; ++i)
     {
         entries[i].is_free = 1;
-        entries[i].next = i + 1 < endry_count
+        entries[i].next = i + 1 < entry_count
                             ? entries + i + 1
                             : NULL;
     }
@@ -264,7 +275,8 @@ static int try_grow(HashTable* table)
     SAFE_BLOCK_START
     {
         ASSERT_SIMPLE(
-                data = realloc(table->buckets, new_cap*sizeof(*data)),
+                data = (HashTableEntry*)
+                        realloc(table->buckets, new_cap*sizeof(*data)),
                 action_result != NULL);
     }
     SAFE_BLOCK_HANDLE_ERRORS
@@ -280,8 +292,9 @@ static int try_grow(HashTable* table)
     /* Update addresses */
     if (addr_offset)
         for (size_t i = 0; i < old_cap; ++i)
-            data[i].next = (HashTableEntry*)
-                                    ( (char*)data[i].next + addr_offset );
+            if (data[i].next)
+                data[i].next = (HashTableEntry*)
+                                        ((intptr_t)data[i].next + addr_offset);
 
     mark_free(data + old_cap, new_cap - old_cap);
 
