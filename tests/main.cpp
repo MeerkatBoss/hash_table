@@ -11,7 +11,7 @@ int main()
 
     hash_table_ctor(&table, 17);
 
-    fill_hash_table(&table, "assets/war_and_peace.txt");
+    fill_hash_table(&table, "assets/war_and_peace.txt", -1);
 
     dump_contents(&table);
 
