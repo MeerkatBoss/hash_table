@@ -6,7 +6,7 @@
 #include "hash_table/hash_table.h"
 #include "table_utils/utils.h"
 
-const size_t hash_table_bucket_count = 17;
+const size_t hash_table_bucket_count = 997;
 
 __always_inline
 static size_t max(size_t x, size_t y)
@@ -35,9 +35,9 @@ int main()
     SAFE_BLOCK_START
     {
         ASSERT_ZERO(
-                fill_hash_table(&tolstoy, "assets/war_and_peace.txt", -1));
+                fill_hash_table(&tolstoy, "assets/war_and_peace.txt.data", -1));
         ASSERT_ZERO(
-                fill_hash_table(&pushkin, "assets/pushkin_vol1-6.txt", -1));
+                fill_hash_table(&pushkin, "assets/pushkin_vol1-6.txt.data", -1));
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
