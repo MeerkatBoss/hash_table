@@ -84,6 +84,7 @@ int fill_hash_table(HashTable* table, const char* filename, ssize_t max_words)
                     ASSERT_ZERO(
                             hash_table_key_increment_counter(table, cur_word));
                     is_in_word = 0;
+                    ++ words_cnt;
                 }
                 SAFE_BLOCK_HANDLE_ERRORS
                 {
@@ -102,7 +103,6 @@ int fill_hash_table(HashTable* table, const char* filename, ssize_t max_words)
                 is_in_word = 1;
             }
 
-            ++ words_cnt;
             if (max_words >= 0 && words_cnt == max_words)
                 goto end;
         }
@@ -127,50 +127,47 @@ end:
 ssize_t get_table_diff(const HashTable* source, const HashTable* words,
                    const char** result_buffer, size_t buffer_size)
 {
-    ssize_t stored = 0;
-    const size_t src_size = source->bucket_count;
+    size_t stored = 0;
 
-    for (size_t i = 0; i < src_size; ++i) // TODO: Iterator for hash table
+    HashTableIterator it = {};
+    if (hash_table_get_iterator(source, &it) < 0)
+        return 0;
+
+    do
     {
-        
-        for (const HashTableEntry* entry = source->buckets[i].next;
-             entry;
-             entry = entry->next)
-        {
-            const size_t count = hash_table_get_key_count(words, entry->key);
-            if (!count) continue;
+        const size_t count = hash_table_get_key_count(words, it.key);
+        if (count) continue;
 
-            if (stored < buffer_size)
-                result_buffer[stored++] = entry->key;
-            else
-                return -1;
-        }
-    }
+        if (stored < buffer_size)
+            result_buffer[stored++] = it.key;
+        else
+            return -1;
 
-    return stored;
+    } while (hash_table_iterator_get_next(&it) == 0);
+
+    return (ssize_t) stored;
 }
 
 static double get_vector_length(const HashTable* src);
 
-double get_cosine_distance(const HashTable* src1, const HashTable* src2)
+double get_cosine_similarity(const HashTable* src1, const HashTable* src2)
 {
     double len1 = 0;
     double dot_product = 0;
 
-    const size_t size1 = src1->bucket_count;
-    for (size_t i = 0; i < size1; ++i)
-    {
-        const HashTableEntry* entry = src1->buckets[i].next;
-        while (entry)
-        {
-            const size_t count = hash_table_get_key_count(src2, entry->key);
-            len1 += (double)entry->count * (double)entry->count;
-            if (count)
-                dot_product += (double)entry->count * (double)count;
+    HashTableIterator it = {};
+    if (hash_table_get_iterator(src1, &it) < 0)
+        return 0;
 
-            entry = entry->next;
-        }
-    }
+    do
+    {
+        const size_t count = hash_table_get_key_count(src2, it.key);
+
+        len1 += (double)it.count * (double)it.count;
+        if (count)
+            dot_product += (double)it.count * (double)count;
+
+    } while (hash_table_iterator_get_next(&it) == 0);
 
     len1 = sqrt(len1);
     double len2 = get_vector_length(src1);
@@ -181,17 +178,16 @@ double get_cosine_distance(const HashTable* src1, const HashTable* src2)
 static double get_vector_length(const HashTable* src)
 {
     double len = 0;
+    HashTableIterator it = {};
+    if (hash_table_get_iterator(src, &it) < 0)
+        return 0;
 
-    const size_t size = src->bucket_count;
-    for (size_t i = 0; i < size; ++i)
+    do
     {
-        const HashTableEntry* entry = src->buckets[i].next;
-        while (entry)
-        {
-            len += entry->count * entry->count;
-            entry = entry->next;
-        }
-    }
+        len += (double)it.count * (double)it.count;
+
+    } while (hash_table_iterator_get_next(&it) == 0);
+
     return sqrt(len);
 }
 

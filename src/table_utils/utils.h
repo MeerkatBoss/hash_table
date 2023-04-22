@@ -48,13 +48,13 @@ ssize_t get_table_diff(const HashTable* source, const HashTable* words,
                    const char** result_buffer, size_t buffer_size);
 
 /**
- * @brief Get cosine distance between multisets of words
+ * @brief Get cosine similarity between multisets of words
  *
  * @param[in] src1  - First multiset
- * @param[in] src2  - Second multiset multiset
+ * @param[in] src2  - Second multiset
  *
  * @return Value of cosine of angle between multiset vectors
  */
-double get_cosine_distance(const HashTable* src1, const HashTable* src2);
+double get_cosine_similarity(const HashTable* src1, const HashTable* src2);
 
 #endif /* utils.h */

@@ -35,9 +35,11 @@ int main()
     SAFE_BLOCK_START
     {
         ASSERT_ZERO(
-                fill_hash_table(&tolstoy, "assets/war_and_peace.txt.data", -1));
+                fill_hash_table(&tolstoy,
+                    "assets/war_and_peace.txt.data", -1));
         ASSERT_ZERO(
-                fill_hash_table(&pushkin, "assets/pushkin_vol1-6.txt.data", -1));
+                fill_hash_table(&pushkin,
+                    "assets/pushkin_vol1-6.txt.data", -1));
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
@@ -67,19 +69,19 @@ int main()
     }
     SAFE_BLOCK_END
 
-    const double cosine = get_cosine_distance(&tolstoy, &pushkin);
-    printf("Cosine similarity: %lf\n\n", cosine);
+    const double cosine = get_cosine_similarity(&tolstoy, &pushkin);
+    printf("Cosine similarity: %lf\n", cosine);
 
     ssize_t cnt = get_table_diff(&tolstoy, &pushkin,
                                  difference, tolstoy.distinct_count);
-    puts("Tolstoy - Pushkin");
+    puts("\n\nTolstoy - Pushkin");
     
     for (ssize_t i = 0; i < cnt; ++ i)
         puts(difference[i]);
 
     cnt = get_table_diff(&pushkin, &tolstoy,
-                                 difference, tolstoy.distinct_count);
-    puts("Pushkin - Tolstoy");
+                             difference, pushkin.distinct_count);
+    puts("\n\nPushkin - Tolstoy");
     
     for (ssize_t i = 0; i < cnt; ++ i)
         puts(difference[i]);

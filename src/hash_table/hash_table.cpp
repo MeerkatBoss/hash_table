@@ -249,6 +249,77 @@ size_t hash_table_get_key_count(const HashTable* table, const char* key)
     return key_entry ? key_entry->count : 0;
 }
 
+int hash_table_get_iterator(const HashTable* table, HashTableIterator* it)
+{
+    SAFE_BLOCK_START
+    {
+        ASSERT_TRUE(table != NULL);
+        ASSERT_TRUE(table->buckets != NULL);
+        ASSERT_TRUE(it != NULL);
+    }
+    SAFE_BLOCK_HANDLE_ERRORS
+    {
+        // TODO: Logs
+        return -1;
+    }
+    SAFE_BLOCK_END
+
+    it->table = table;
+    it->entry = NULL;
+    it->index = 0;
+    it->key = NULL;
+    it->count = 0;
+
+    for (size_t i = 0; i < table->bucket_count; ++i)
+        if (table->buckets[i].next)
+        {
+            it->entry = table->buckets[i].next;
+            it->key = it->entry->key;
+            it->count = it->entry->count;
+            it->index = i;
+            return 0;
+        }
+
+    return -1;
+}
+
+int hash_table_iterator_has_next(const HashTableIterator* it)
+{
+    if (!it || !it->entry) return 0;
+
+    if (it->entry->next) return 1;
+
+    for (size_t i = it->index + 1; i < it->table->bucket_count; ++i)
+        if (it->table->buckets[i].next)
+            return 1;
+
+    return 0;
+}
+
+int hash_table_iterator_get_next(HashTableIterator* it)
+{
+    if (!it || !it->entry) return -1;
+
+    if (it->entry->next)
+    {
+        it->entry = it->entry->next;
+        it->key = it->entry->key;
+        it->count = it->entry->count;
+        return 0;
+    }
+
+    for (size_t i = it->index + 1; i < it->table->bucket_count; ++i)
+        if (it->table->buckets[i].next)
+        {
+            it->index = i;
+            it->entry = it->table->buckets[i].next;
+            it->key = it->entry->key;
+            it->count = it->entry->count;
+            return 0;
+        }
+    return -1;
+}
+
 static void mark_free(HashTableEntry* entries, size_t entry_count)
 {
     for (size_t i = 0; i < entry_count; ++i)

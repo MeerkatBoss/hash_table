@@ -37,6 +37,16 @@ struct HashTable
     size_t total_count;
 };
 
+struct HashTableIterator
+{
+    const HashTable* table;
+    const HashTableEntry* entry;
+    size_t index;
+
+    const char* key;
+    size_t count;
+};
+
 /**
  * @brief Create and initialize new hash table
  *
@@ -88,5 +98,34 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key);
  * @return Counter value
  */
 size_t hash_table_get_key_count(const HashTable* table, const char* key);
+
+/**
+ * @brief Retrieve iterator to entries of hash table
+ *
+ * @param[in] table	    - HashTable to be iterated
+ * @param[out] it	    - Constructed iterator
+ *
+ * @return 0 upon success, -1 if `table` or `it` are NULL
+ *          or `table` is not initialized or empty
+ */
+int hash_table_get_iterator(const HashTable* table, HashTableIterator* it);
+
+/**
+ * @brief Check if iterator can be moved to next element
+ *
+ * @param[in] it	- HashTable iterator to be checked
+ * 
+ * @return 0 if no next element exists, 1 if it does
+ */
+int hash_table_iterator_has_next(const HashTableIterator* it);
+
+/**
+ * @brief Move iterator to next element
+ *
+ * @param[inout] it	- HashTable iterator to be moved
+ *
+ * @return 0 upon successful move, -1 if no next element existed
+ */
+int hash_table_iterator_get_next(HashTableIterator* it);
 
 #endif /* hash_table.h */
