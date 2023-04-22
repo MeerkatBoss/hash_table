@@ -6,7 +6,7 @@
 #include "hash_table/hash_table.h"
 #include "table_utils/utils.h"
 
-const size_t hash_table_bucket_count = 997;
+const size_t hash_table_bucket_count = 19;
 
 __always_inline
 static size_t max(size_t x, size_t y)
