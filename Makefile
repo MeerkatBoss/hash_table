@@ -26,7 +26,8 @@ CMACHINE:=-mavx512f -mavx512bw
 CFLAGS:=-std=c++2a -fPIE -pie $(CMACHINE) $(CWARN)
 BUILDTYPE?=Debug
 
-HASH_FUNC:=hash_always_one
+HASH_FUNC?=hash_always_one
+ARGS?=assets/war_and_peace.txt.data assets/pushkin_vol1-6.txt.data
 
 DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
 
@@ -57,7 +58,7 @@ OBJEXT	:= o
 
 SOURCES := $(shell find $(SRCDIR) -type f -name "*.$(SRCEXT)")
 TESTS	:= $(shell find $(TESTDIR) -type f -name "*$(SRCEXT)")
-LIBS	:= $(patsubst lib%.a, %, $(shell find $(LIBDIR) -type f))
+LIBS	:= $(patsubst $(LIBDIR)/lib%.a, %, $(shell find $(LIBDIR) -type f))
 OBJECTS	:= $(patsubst $(SRCDIR)/%,$(OBJDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 TESTOBJS:= $(patsubst %,$(OBJDIR)/%,$(TESTS:.$(SRCEXT)=.$(OBJEXT)))
 

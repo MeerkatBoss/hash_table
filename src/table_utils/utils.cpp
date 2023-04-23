@@ -138,11 +138,11 @@ ssize_t get_table_diff(const HashTable* source, const HashTable* words,
         const size_t count = hash_table_get_key_count(words, it.key);
         if (count) continue;
 
-        if (stored < buffer_size)
-            result_buffer[stored++] = it.key;
-        else
+        if (result_buffer && stored < buffer_size)
+            result_buffer[stored] = it.key;
+        else if (result_buffer)
             return -1;
-
+        stored++;
     } while (hash_table_iterator_get_next(&it) == 0);
 
     return (ssize_t) stored;

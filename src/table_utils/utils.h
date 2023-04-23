@@ -37,12 +37,13 @@ int fill_hash_table(HashTable* table, const char* filename, ssize_t max_words);
  *
  * @param[in]  source	        - Table of words to be selected from
  * @param[in]  words	        - Table of words to be compared against
- * @param[out] result_buffer	- Buffer to store the result in
+ * @param[out] result_buffer	- Buffer to store the result in. If NULL, no
+ *                                  entries will be stored
  * @param[in]  buffer_size      - Maximum number of words to be stored in
- *                                  `result_buffer`
+ *                                  `result_buffer`. Ignored if `result_buffer`
+ *                                  is NULL
  *
- * @return number of entries stored, -1 if `buffer_size`
- * was too small
+ * @return Number of entries stored, -1 if `buffer_size` was too small
  */
 ssize_t get_table_diff(const HashTable* source, const HashTable* words,
                    const char** result_buffer, size_t buffer_size);

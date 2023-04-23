@@ -6,88 +6,31 @@
 #include "hash_table/hash_table.h"
 #include "table_utils/utils.h"
 
-const size_t hash_table_bucket_count = 19;
+#include "program.h"
 
-__always_inline
-static size_t max(size_t x, size_t y)
+int main(int argc, char** argv)
 {
-    return x > y ? x : y;
-}
-
-int main()
-{
-    HashTable tolstoy = {}, pushkin = {};
+    ProgramState program = {};
+    ProgramConfig config = {};
 
     SAFE_BLOCK_START
     {
         ASSERT_ZERO(
-                hash_table_ctor(&tolstoy, hash_table_bucket_count));
+            configure_program(argc, argv, &config));
         ASSERT_ZERO(
-                hash_table_ctor(&pushkin, hash_table_bucket_count));
+            program_init(&program, &config));
+        ASSERT_ZERO(
+            program_compare_files(&program, &config));
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
-        perror("Initial allocations");
-        return 1;
-    }
-    SAFE_BLOCK_END
-
-    SAFE_BLOCK_START
-    {
-        ASSERT_ZERO(
-                fill_hash_table(&tolstoy,
-                    "assets/war_and_peace.txt.data", -1));
-        ASSERT_ZERO(
-                fill_hash_table(&pushkin,
-                    "assets/pushkin_vol1-6.txt.data", -1));
-    }
-    SAFE_BLOCK_HANDLE_ERRORS
-    {
-        perror("Filling hash tables");
-        hash_table_dtor(&tolstoy);
-        hash_table_dtor(&pushkin);
+        unload_config(&config);
+        program_finish(&program);
         return 1;
     }
     SAFE_BLOCK_END
     
-    const char** difference = NULL;
-    SAFE_BLOCK_START
-    {
-        ASSERT_SIMPLE(
-                difference = (const char**)calloc(
-                                max(tolstoy.distinct_count,
-                                    pushkin.distinct_count),
-                                sizeof(*difference)),
-                action_result != NULL);
-    }
-    SAFE_BLOCK_HANDLE_ERRORS
-    {
-        perror("Differrence buffer allocation");
-        hash_table_dtor(&tolstoy);
-        hash_table_dtor(&pushkin);
-        return 1;
-    }
-    SAFE_BLOCK_END
-
-    const double cosine = get_cosine_similarity(&tolstoy, &pushkin);
-    printf("Cosine similarity: %lf\n", cosine);
-
-    ssize_t cnt = get_table_diff(&tolstoy, &pushkin,
-                                 difference, tolstoy.distinct_count);
-    puts("\n\nTolstoy - Pushkin");
-    
-    for (ssize_t i = 0; i < cnt; ++ i)
-        puts(difference[i]);
-
-    cnt = get_table_diff(&pushkin, &tolstoy,
-                             difference, pushkin.distinct_count);
-    puts("\n\nPushkin - Tolstoy");
-    
-    for (ssize_t i = 0; i < cnt; ++ i)
-        puts(difference[i]);
-
-    hash_table_dtor(&tolstoy);
-    hash_table_dtor(&pushkin);
-    free(difference);
+    unload_config(&config);
+    program_finish(&program);
     return 0;
 }

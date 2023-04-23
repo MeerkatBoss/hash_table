@@ -21,7 +21,6 @@ struct assert_failed_data
 {
     bool had_error;
 
-    int err_no;
     size_t line_number;
     const char* filename;
     const char* function;
@@ -52,7 +51,6 @@ struct assert_failed_data
 
 #ifndef NO_VERBOSE_ASSERTS
 #define __FILL_ASSERT_DATA(action, condition, msg, data) do {       \
-    assertion_info.err_no = errno;                                  \
     assertion_info.line_number = __LINE__;                          \
     assertion_info.filename = __FILE__;                             \
     assertion_info.function = __PRETTY_FUNCTION__;                  \
@@ -61,7 +59,9 @@ struct assert_failed_data
     assertion_info.message = msg;                                   \
 } while (0)
 #else
-#define __FILL_ASSERT_DATA(...)
+#define __FILL_ASSERT_DATA(action, condition, msg, data) do {       \
+    assertion_info.message = msg;                                   \
+} while (0)
 #endif
 
 #define ASSERT_MESSAGE_CALLBACK(action, condition, message, callback) { \
