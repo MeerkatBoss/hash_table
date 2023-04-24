@@ -17,6 +17,18 @@ uint64_t hash_strlen(const char* str)
     return strlen(str);
 }
 
+uint64_t hash_sum_char  (const char* str)
+{
+    uint64_t hash = 0;
+
+    do
+    {
+        hash += (uint64_t) *str;
+    } while(*(str++));
+
+    return hash;
+}
+
 __always_inline
 static uint64_t rotate_right(uint64_t x)
 {

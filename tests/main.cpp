@@ -12,7 +12,7 @@ int main()
 {
     HashTable table = {};
 
-    hash_table_ctor(&table, 19);
+    hash_table_ctor(&table, 919);
 
     fill_hash_table(&table, "assets/war_and_peace.txt.data", -1);
 
@@ -23,7 +23,7 @@ int main()
 
 static void dump_contents(const HashTable* table)
 {
-    FILE* results = fopen("results/hash_functions.csv", "a");
+    FILE* results = fopen("results/hash_functions_long.csv", "a");
     fputs(STR(HASH_FUNCTION), results);
 
     for (size_t i = 0; i < table->bucket_count; ++i)
