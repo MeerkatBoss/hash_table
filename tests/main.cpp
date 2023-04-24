@@ -12,7 +12,7 @@ int main()
 {
     HashTable table = {};
 
-    hash_table_ctor(&table, 17);
+    hash_table_ctor(&table, 19);
 
     fill_hash_table(&table, "assets/war_and_peace.txt.data", -1);
 
