@@ -26,6 +26,6 @@ uint64_t hash_ror_xor   (const char* str);
 
 uint64_t hash_rol_xor   (const char* str);
 
-uint64_t hash_custom    (const char* str);
+uint64_t hash_murmur    (const char* str);
 
 #endif /* hash_functions.h */

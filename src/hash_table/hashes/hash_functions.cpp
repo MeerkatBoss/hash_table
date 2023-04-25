@@ -57,7 +57,7 @@ uint64_t hash_rol_xor(const char* str)
     return hash;
 }
 
-uint64_t hash_custom(const char* str)
+uint64_t hash_murmur(const char* str)
 {
     /*
      * MurmurHash64A by Austin Appleby

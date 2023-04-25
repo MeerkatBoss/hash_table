@@ -1,8 +1,8 @@
 # Hash function comparison
 
 ## Introduction
-One of the defining aspects of hash table performance is the choice of the
-hash function. A good hash function must not favour one value over another,
+One of the main aspects of hash table performance is the choice of the hash
+function. A good hash function should not favour one value over another,
 producing a uniform distribution of hash values, which ensures faster table
 access times.
 
@@ -12,88 +12,110 @@ the best one.
 ## Materials and methods
 
 ### **Hash table algorithm**
-The tested hash functions were used in a hash table data structure. The
-implemented hash table used closed addressing (open hashing) with
-linked list collision resolution.
+Tested hash functions were used in a hash table data structure. Hash table
+was implemented [here](../src/hash_table/hash_table.cpp) as follows:
+- Hash table used closed addressing (open hashing)
+- Number of buckets in table was a prime number (values 19 and 7019 were chosen)
+- Collisions were resolved using linked lists
 
 ### **Hash functions**
-The following functions were tested (for implementation, see
+The following functions were tested (for implementations, see
 [this file](../src/hash_table/hashes/hash_functions.cpp)):
 
 - `hash_always_one` - Returns 1 for every input
 - `hash_first_char` - Returns the value of the first byte in word
 - `hash_strlen`     - Returns the length (in bytes) of the word
 - `hash_sum_char`   - Returns the sum of bytes representing a word
-- `hash_ror_xor`    - Accumulates the hash by rotating the accumulator
-                      cyclically by one bit to the right and then performing
-                      bitwise `xor` with next byte of a word
-- `hash_rol_xor`    - Accumulates the hash by rotating the accumulator
-                      cyclically by one bit to the left and then performing
-                      bitwise `xor` with next byte of a word
-- `hash_custom`     - Implementation of [MurmurHash by Austin Appleby
+- `hash_ror_xor`    - Accumulates hash using formula:
+                      $\text{hash} = (\text{hash}\space\tt{ror}\space1)
+                                      \space\tt{xor}\space\text{byte}$
+- `hash_rol_xor`    - Accumulates hash using formula:
+                      $\text{hash} = (\text{hash}\space\tt{rol}\space1)
+                                      \space\tt{xor}\space\text{byte}$
+- `hash_murmur`     - Implementation of [MurmurHash by Austin Appleby
   ](https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp)
 
 ### **Testing method**
-In order to explore the hash values distribution of various hash functions the
-text was loaded from file and each word from it was stored in  a hash table
-using the tested function to determine the word hash. The information about
-bucket sizes in a hash table was dumped into a `.csv` file.
+The testing sequence were as follows:
+1. Words were loaded from a text file
+2. Hash value was calculated for each word using tested function
+3. Words were added to hash table using the calculated hash values
+4. Bucket sizes in hash table were determined
+5. Information about bucket sizes was dumped into a `.csv` file
 
 ### **Loaded data**
-The data stored in hash table was read from a collection of works by 
-Alexander Sergeyevich Pushkin, the famous Russian poet. The first 6 volumes of
-[these 10](https://rvb.ru/pushkin/toc.htm) were taken. Before loading the file,
-it was stripped of any punctuation and converted to lowercase using
-[this Python script](../convert.py).
+The data stored in hash table was read from a famous Russian novel "War and
+Peace" by Lev Tolstoy. Before loading the file, it was stripped of any
+punctuation and converted to lowercase using [this Python script
+](../convert.py).
 
 ## Results
 
 ### **All tested functions**
-When graphing the hash value distribution for all tested functions, the
-following results were obtained:
-
+The information about bucket sizes for all tested functions in hash table
+of size 19 is shown in *Figure 1*.
 | ![All functions](histograms/hash_func_all.png) |
 |:---|
 | *Figure 1. Hash functions summary* |
 
-### **Best performing functions**
-Several functions on the previous histogram have high peaks which do not allow
-us to see the differences between more optimal functions, so we will graph the
-last ones separately:
+### **Functions with smaller buckets**
+The information about bucket sizes produced by selected functions (namely,
+`hash_sum_char`, `hash_ror_xor`, `hash_rol_xor` and `hash_murmur`) is shown in
+*Figure 2*.
 
 | ![Best functions](histograms/hash_func_opt.png) |
 |:---|
-| *Figure 2. Best performing functions summary* |
+| *Figure 2. Selected functions summary* |
 
 ### **Other hashing functions**
-The worst-performing functions were also graphed separately:
+*Figure 3* shows the distributions of values produced by functions
+`hash_always_one`, `hash_first_char` and `hash_strlen`.
 
 | ![Worst functions](histograms/hash_func_worst.png) |
 |:---|
-| *Figure 3. Worst performing functions summary* |
+| *Figure 3. Larger bucket sizes* |
 
+### **Larger hash tables**
 
 The distribution of values for `hash_strlen` function seems puzzling, due to the
-fact that its normal distribution graph seem to be wrapped by `mod 19` operation.
+fact that its normal distribution plot seem to be wrapped by `mod 19` operation.
 Additionally, the Central Limit Theorem predicts that the values produced by
-`hash_sum_char` have to be distributed normally and we must see one or several
-high peaks in its values' distribution, which is apparently not the case.
-Therefore, these functions were tested on a larger bucket count of 919 to better
-see their distributions. The results of these tests are following:
+`hash_sum_char` have to be distributed normally and we expect to see one or
+several high peaks in its values' distribution, which is apparently not the
+case.  Therefore, these functions were tested on a larger bucket count of 7019
+to better see their distributions. The results of these tests are shown in
+*Figure 4* and *Figure 5*.
 
 | ![`hash_strlen` distribution](histograms/hash_strlen_large.png) | ![ `hash_sum_char` distribution](histograms/hash_sum_large.png) |
 |:---|:---|
 | *Figure 4. Full distribution for `hash_strlen`* | *Figure 5. Full distribution for `hash_sum_char`* |
 
+The test with bucket count of 7019 was also performed for functions
+`hash_ror_xor`, `hash_rol_xor` and `hash_murmur`. The results are presented
+in *Figure 6*.
+
+| ![Best](histograms/hash_best_large.png) |
+|:---|
+| *Figure 6. Near-uniform distributions* |
+
+
 ## Discussion
 
 ### **Best hash functions**
-The functions `hash_sum_char`, `hash_ror_xor`, `hash_rol_xor` and `hash_custom`
+The functions `hash_sum_char`, `hash_ror_xor`, `hash_rol_xor` and `hash_murmur`
 performed very similarly on a smaller hash tables. Their distributions are close
-to uniform, which is ideal for the hash function. However, increasing the bucket
-count revealed that `hash_sum_char` suffers (rather predictably) from the
-effects of the Central Limit Theorem, which causes it to favour some of the hash
-values over the others. 
+to uniform, which is ideal for the hash function.
+
+However, increasing the bucket count revealed that `hash_sum_char` suffers
+(rather predictably) from the effects of the Central Limit Theorem, which causes
+it to favour some of the hash values over the others and to leave most buckets
+in a table nearly empty.
+
+On the other hand, the distributions of `hash_ror_xor`, `hash_rol_xor` and
+`hash_murmur` remain near-uniform even when increasing the table size. The
+`hash_murmur` function produces slightly smaller bucket sizes: in test with
+bucket count of 7019 the sizes of buckets produced by `hash_murmur` did not
+exceed 15.
 
 ### **Distribution of `hash_strlen`**
 
@@ -104,7 +126,7 @@ buckets exclusively, while the first one does not have this property. There
 seems to be very few elements in buckets with odd numbers greater than 20.
 
 These properties suggest that the smaller distribution was produced by French
-words in Pushkin's text, which are mostly composed of latin letters.  These
+words in Tolstoy's text, which are mostly composed of latin letters.  These
 letters are represented with a single byte in UTF-8 encoding, therefore the
 length of a word is close to the value returned by `strlen` function. The
 Russian words, on the other hand, are composed of cyrillic letters, represented
