@@ -27,11 +27,9 @@ The following functions were tested (for implementations, see
 - `hash_strlen`     - Returns the length (in bytes) of the word
 - `hash_sum_char`   - Returns the sum of bytes representing a word
 - `hash_ror_xor`    - Accumulates hash using formula:
-                      $\text{hash} = (\text{hash}\space\tt{ror}\space1)
-                                      \space\tt{xor}\space\text{byte}$
+                      `hash = (hash ror 1) xor byte`
 - `hash_rol_xor`    - Accumulates hash using formula:
-                      $\text{hash} = (\text{hash}\space\tt{rol}\space1)
-                                      \space\tt{xor}\space\text{byte}$
+                      `hash = (hash rol 1) xor byte`
 - `hash_murmur`     - Implementation of [MurmurHash by Austin Appleby
   ](https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp)
 
