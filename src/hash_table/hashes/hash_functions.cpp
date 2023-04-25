@@ -4,7 +4,7 @@
 
 uint64_t hash_always_one(const char* str __attribute((unused)))
 {
-    return 0;
+    return 1;
 }
 
 uint64_t hash_first_char(const char* str)

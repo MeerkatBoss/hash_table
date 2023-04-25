@@ -106,7 +106,7 @@ long words with odd length.
 
 ## Conclusions
 The most effective hashing functions in this research are `hash_ror_xor`,
-`hash_rol_xor` and `hash_simple`. All of these functions have almost identical
+`hash_rol_xor` and `hash_custom`. All of these functions have almost identical
 value distributions close to uniform one, which makes them all the perfect
 choice for usage in hash table implementations and allows them to be used
 interchangeably.
