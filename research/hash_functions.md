@@ -52,19 +52,26 @@ it was stripped of any punctuation and converted to lowercase using
 When graphing the hash value distribution for all tested functions, the
 following results were obtained:
 
-![All functions](histograms/hash_func_all.png)
+| ![All functions](histograms/hash_func_all.png) |
+|:---|
+| *Figure 1. Hash functions summary* |
 
 ### **Best performing functions**
 Several functions on the previous histogram have high peaks which do not allow
 us to see the differences between more optimal functions, so we will graph the
 last ones separately:
 
-![Best functions](histograms/hash_func_opt.png)
+| ![Best functions](histograms/hash_func_opt.png) |
+|:---|
+| *Figure 2. Best performing functions summary* |
 
 ### **Other hashing functions**
 The worst-performing functions were also graphed separately:
 
-![Worst functions](histograms/hash_func_worst.png)
+| ![Worst functions](histograms/hash_func_worst.png) |
+|:---|
+| *Figure 3. Worst performing functions summary* |
+
 
 The distribution of values for `hash_strlen` function seems puzzling, due to the
 fact that its normal distribution graph seem to be wrapped by `mod 19` operation.
@@ -74,8 +81,9 @@ high peaks in its values' distribution, which is apparently not the case.
 Therefore, these functions were tested on a larger bucket count of 919 to better
 see their distributions. The results of these tests are following:
 
-![`hash_strlen` distribution](histograms/hash_strlen_large.png)
-![`hash_sum_char` distribution](histograms/hash_sum_large.png)
+| ![`hash_strlen` distribution](histograms/hash_strlen_large.png) | ![ `hash_sum_char` distribution](histograms/hash_sum_large.png) |
+|:---|:---|
+| *Figure 4. Full distribution for `hash_strlen`* | *Figure 5. Full distribution for `hash_sum_char`* |
 
 ## Discussion
 
