@@ -11,6 +11,8 @@
 
 #include "hash_table.h"
 
+static HashTableEntry* get_prev(const HashTable* table,
+                                const char* key, uint64_t key_hash);
 static void mark_free(HashTableEntry* entries, size_t entry_count);
 static int try_grow(HashTable* table);
 
@@ -128,11 +130,7 @@ int hash_table_key_increment_counter(HashTable* table, const char* key)
     SAFE_BLOCK_END
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
-
-    HashTableEntry* key_entry = table->buckets[key_hash].next;
-
-    while (key_entry && strcmp(key_entry->key, key) != 0)
-        key_entry = key_entry->next;
+    HashTableEntry* key_entry = get_prev(table, key, key_hash)->next;
 
     if (key_entry)
     {
@@ -187,14 +185,8 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
 
-    HashTableEntry* lst_entry = &table->buckets[key_hash];
+    HashTableEntry* lst_entry = get_prev(table, key, key_hash);
     HashTableEntry* key_entry = lst_entry->next;
-
-    while (key_entry && strcmp(key_entry->key, key) != 0)
-    {
-        lst_entry = key_entry;
-        key_entry = lst_entry->next;
-    }
 
     SAFE_BLOCK_START
     {
@@ -241,11 +233,8 @@ size_t hash_table_get_key_count(const HashTable* table, const char* key)
 
     size_t key_hash = HASH_FUNCTION(key) % table->bucket_count;
 
-    HashTableEntry* key_entry = table->buckets[key_hash].next;
+    HashTableEntry* key_entry = get_prev(table, key, key_hash)->next;
 
-    while (key_entry && strcmp(key_entry->key, key) != 0)
-        key_entry = key_entry->next;
-    
     return key_entry ? key_entry->count : 0;
 }
 
@@ -318,6 +307,20 @@ int hash_table_iterator_get_next(HashTableIterator* it)
             return 0;
         }
     return -1;
+}
+
+static HashTableEntry* get_prev(const HashTable* table,
+                                const char* key, uint64_t key_hash)
+{
+    HashTableEntry* lst_entry = &table->buckets[key_hash];
+    HashTableEntry* key_entry = lst_entry->next;
+
+    while (key_entry && strcmp(key_entry->key, key) != 0)
+    {
+        lst_entry = key_entry;
+        key_entry = lst_entry->next;
+    }
+    return lst_entry;
 }
 
 static void mark_free(HashTableEntry* entries, size_t entry_count)
