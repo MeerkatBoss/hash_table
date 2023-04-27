@@ -3,34 +3,33 @@
 #include "hash_table/hash_table.h"
 #include "table_utils/utils.h"
 
-static void dump_contents(const HashTable* table);
+#include "test_utils/config.h"
+#include "test_cases/histogram.h"
 
-#define STR(x) __BASIC_STR(x)
-#define __BASIC_STR(x) #x
-
-int main()
+int main(int argc, char** argv)
 {
-    HashTable table = {};
+    TestConfig config = {};
+    int parsed = configure_tests(argc, argv, &config);
 
-    hash_table_ctor(&table, 7019);
-
-    fill_hash_table(&table, "assets/war_and_peace.txt.data", -1);
-
-    dump_contents(&table);
-
-    hash_table_dtor(&table);
-}
-
-static void dump_contents(const HashTable* table)
-{
-    FILE* results = fopen("results/hash_functions_long.csv", "a");
-    fputs(STR(HASH_FUNCTION), results);
-
-    for (size_t i = 0; i < table->bucket_count; ++i)
+    if (parsed < 0 || config.had_error)
     {
-        HashTableEntry* entry = &table->buckets[i];
-        fprintf(results, ",%zu", entry->count);
+        fprintf(stderr, "Invalid arguments");
+        return 1;
     }
-    fputc('\n', results);
+
+    argc -= parsed - 1;
+    argv += parsed - 1;
+
+    switch (config.test_case)
+    {
+    case TEST_HISTOGRAM:
+        return run_test_histogram(argc, argv, &config);
+    case TEST_BENCHMARK_FULL:
+        return 2;
+    case TEST_NONE:
+    default:
+        fprintf(stderr, "Invalid test case");
+        return 1;
+    }
 }
 
