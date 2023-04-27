@@ -78,6 +78,9 @@ int fill_hash_table(HashTable* table, const char* filename, ssize_t max_words)
         {
             if (!is_word_char(text[i]) && is_in_word)
             {
+                if (cur_word - text + 64 > buffer_size)
+                    break; // Small word at end of buffer requires re-read
+
                 SAFE_BLOCK_START
                 {
                     text[i] = '\0';

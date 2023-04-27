@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <immintrin.h>
 
 #include "meerkat_assert/asserts.h"
 
@@ -97,15 +98,15 @@ int hash_table_dtor(HashTable* table)
     }
     SAFE_BLOCK_END
 
-    for (size_t i = 0; i < table->bucket_count; ++i)
+    /*for (size_t i = 0; i < table->bucket_count; ++i)
     {
         HashTableEntry* entry = table->buckets[i].next;
-        while (entry)
+         while (entry)
         {
             free(entry->key);
             entry = entry->next;
         }
-    }
+    }*/
     free(table->buckets);
 
     memset(table, 0, sizeof(*table));
@@ -155,7 +156,8 @@ int hash_table_key_increment_counter(HashTable* table, const char* key)
     key_entry = table->free;
     table->free = table->free->next;
     
-    key_entry->key = strdup(key);
+    strncpy(key_entry->key, key, max_word_length);
+    // key_entry->key = strdup(key);
     key_entry->count = 1;
     key_entry->next = table->buckets[key_hash].next;
     
@@ -211,8 +213,9 @@ int hash_table_key_decrement_counter(HashTable* table, const char* key)
     -- table->buckets[key_hash].count;
     -- table->distinct_count;
 
-    free(key_entry->key);
-    key_entry->key = NULL;
+    // free(key_entry->key);
+    // key_entry->key = NULL;
+    memset(key_entry->key, 0, max_word_length);
     key_entry->count = 0;
 
     key_entry->next = table->free;
@@ -309,17 +312,37 @@ int hash_table_iterator_get_next(HashTableIterator* it)
     return -1;
 }
 
-static HashTableEntry* get_prev(const HashTable* table,
+__always_inline
+static __m512i str_to_m512(const char* key)
+{
+    __m512i key_vec = _mm512_loadu_si512(key);
+    __m512i zero = _mm512_setzero_epi32();
+    __mmask64 mask = _mm512_cmpeq_epi8_mask(key_vec, zero);
+    size_t len = (unsigned) __builtin_ctzll(mask);
+    mask = (1ull << len) - 1ull;
+    key_vec = _mm512_maskz_mov_epi8(mask, key_vec);
+    return key_vec;
+}
+
+static HashTableEntry* __attribute__((noinline)) get_prev(
+                                const HashTable* table,
                                 const char* key, uint64_t key_hash)
 {
+    __m512i key_vec = str_to_m512(key);
+
     HashTableEntry* lst_entry = &table->buckets[key_hash];
     HashTableEntry* key_entry = lst_entry->next;
 
-    while (key_entry && strcmp(key_entry->key, key) != 0)
+    while (key_entry)
     {
+        __m512i cur = *(__m512i*)key_entry->key;
+        __mmask64 cmp_mask = _mm512_cmpeq_epi8_mask(key_vec, cur);
+        if (!~cmp_mask) break;
+
         lst_entry = key_entry;
         key_entry = lst_entry->next;
     }
+
     return lst_entry;
 }
 
