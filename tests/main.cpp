@@ -5,6 +5,7 @@
 
 #include "test_utils/config.h"
 #include "test_cases/histogram.h"
+#include "test_cases/benchmark.h"
 
 int main(int argc, char** argv)
 {
@@ -25,7 +26,7 @@ int main(int argc, char** argv)
     case TEST_HISTOGRAM:
         return run_test_histogram(argc, argv, &config);
     case TEST_BENCHMARK_FULL:
-        return 2;
+        return run_test_benchmark(argc, argv, &config);
     case TEST_NONE:
     default:
         fprintf(stderr, "Invalid test case");

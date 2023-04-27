@@ -19,6 +19,7 @@
 enum TestCase
 {
     TEST_NONE,
+    TEST_BENCHMARK_FULL,
     TEST_HISTOGRAM,
 };
 
