@@ -16,9 +16,11 @@
 
 struct HashTableEntry;
 
+static constexpr size_t max_word_length = 64;
+
 struct HashTableEntry
 {
-    char* key;
+    char key[max_word_length] __attribute__((aligned (max_word_length)));
     size_t count; 
 
     HashTableEntry* next;

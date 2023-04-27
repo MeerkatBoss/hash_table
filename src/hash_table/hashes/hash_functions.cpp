@@ -2,6 +2,8 @@
 
 #include "hash_functions.h"
 
+static constexpr size_t max_len = 64;
+
 uint64_t hash_always_one(const char* str __attribute((unused)))
 {
     return 1;
@@ -14,17 +16,18 @@ uint64_t hash_first_char(const char* str)
 
 uint64_t hash_strlen(const char* str)
 {
-    return strlen(str);
+    return strnlen(str, 64);
 }
 
 uint64_t hash_sum_char  (const char* str)
 {
     uint64_t hash = 0;
+    size_t cnt = 0;
 
     do
     {
         hash += (uint64_t) *str;
-    } while(*(str++));
+    } while(*(str++) && ++cnt < max_len);
 
     return hash;
 }
@@ -44,7 +47,8 @@ static uint64_t rotate_left(uint64_t x)
 uint64_t hash_ror_xor(const char* str)
 {
     uint64_t hash = 0;
-    while (*str)
+    size_t cnt = 0;
+    while (*str && cnt++ < max_len)
         hash = rotate_right(hash) ^ (uint64_t) *(str++);
     return hash;
 }
@@ -52,7 +56,8 @@ uint64_t hash_ror_xor(const char* str)
 uint64_t hash_rol_xor(const char* str)
 {
     uint64_t hash = 0;
-    while (*str)
+    size_t cnt = 0;
+    while (*str && cnt++ < max_len)
         hash = rotate_left(hash) ^ (uint64_t) *(str++);
     return hash;
 }
@@ -70,7 +75,7 @@ uint64_t hash_murmur(const char* str)
                                                 // algorithm
     const uint64_t seed = 0x8B72E9FB7FAA60FD;   // This is offline-generated
                                                 // seed
-    const size_t   len  = strlen(str);
+    const size_t   len  = strnlen(str, max_len);
     const int      shift= 47;
 
     uint64_t hash = seed ^ (len * mult);
