@@ -9,6 +9,8 @@
 
 #include "meerkat_assert/asserts.h"
 
+#include "test_utils/math.h"
+
 #include "benchmark.h"
 
 struct ExecTime
@@ -19,12 +21,18 @@ struct ExecTime
 
 static const size_t repeat_count = 10;
 
+static int fill_data(int argc, char** argv,
+                     double* sys_time, double* user_time, size_t data_size);
+
 static int get_execution_time(int argc, char** argv, ExecTime* exec_time);
+
+static void run_child(int argc, char** argv);
 
 int run_test_benchmark(int argc, const char* const* argv,
                        const TestConfig* config)
 {
     FILE *output = NULL;
+    double sys_time[repeat_count], user_time[repeat_count];
     SAFE_BLOCK_START
     {
         if (config->filename)
@@ -39,6 +47,13 @@ int run_test_benchmark(int argc, const char* const* argv,
 
         ASSERT_GREATER_MESSAGE(
             argc, 1, "No program to benchmark");
+
+        -- argc;
+        ++ argv;
+        ASSERT_ZERO_MESSAGE(
+            fill_data(argc, const_cast<char**>(argv),
+                        sys_time, user_time, repeat_count),
+            "Failed to run benchmark");
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
@@ -47,49 +62,71 @@ int run_test_benchmark(int argc, const char* const* argv,
     }
     SAFE_BLOCK_END
 
-    double sys_time[10], user_time[10];
-    double mean_sys = 0, mean_user = 0;
-    -- argc;
-    ++ argv;
+    double mean_sys   = get_mean(sys_time,  repeat_count);
+    double mean_user  = get_mean(user_time, repeat_count);
+    double mean_total = mean_sys + mean_user;
 
-    for (size_t i = 0; i < 10; ++i)
-    {
-        ExecTime exec_time = {};
-        if (get_execution_time(argc, (char**)argv, &exec_time) < 0)
-            return 1;
+    double err_sys   = get_stddev(sys_time,  mean_sys,  repeat_count);
+    double err_user  = get_stddev(user_time, mean_user, repeat_count);
+    double err_total = err_sys + err_user;
 
-        fprintf(output, "%lf %lf\n", exec_time.user_ms, exec_time.sys_ms);
+    const double sys_exp   = get_round_exponent(err_sys);
+    const double user_exp  = get_round_exponent(err_user);
+    const double total_exp = get_round_exponent(err_total);
 
-        mean_sys  += exec_time.sys_ms;
-        mean_user += exec_time.user_ms;
-        sys_time[i]  = exec_time.sys_ms;
-        user_time[i] = exec_time.user_ms;
-    }
+    mean_sys   = round_with_exponent(mean_sys,   sys_exp);
+    mean_user  = round_with_exponent(mean_user,  user_exp);
+    mean_total = round_with_exponent(mean_total, total_exp);
 
-    mean_sys /= 10;
-    mean_user /= 10;
+    err_sys   = round_with_exponent(err_sys,   sys_exp);
+    err_user  = round_with_exponent(err_user,  user_exp);
+    err_total = round_with_exponent(err_total, total_exp);
 
-    double var_sys = 0, var_user = 0;
-    for (size_t i = 0; i < 10; ++i)
-    {
-        var_sys  += (sys_time[i]  - mean_sys)  * (sys_time[i]  - mean_sys);
-        var_user += (user_time[i] - mean_user) * (user_time[i] - mean_user);
-    }
-
-    var_sys  = sqrt(var_sys / 9);
-    var_user = sqrt(var_user / 9);
-
-    fprintf(output, "Total: %.3lf (~%.3lf)\n"
-                    "User:  %.3lf (~%.3lf)\n"
-                    "Sys:   %.3lf (~%.3lf)\n",
-                    mean_sys + mean_user, var_sys + var_user,
-                    mean_user, var_user,
-                    mean_sys,  var_sys);
+    fprintf(output, "Total: %lgms (~%lgms)\n"
+                    "User:  %lgms (~%lgms)\n"
+                    "Sys:   %lgms (~%lgms)\n",
+                    mean_total, err_total,
+                    mean_user,  err_user,
+                    mean_sys,   err_sys);
 
     return 0;
 }
 
-static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
+static int fill_data(int argc, char** argv,
+                     double* sys_time, double* user_time, size_t data_size)
+{
+    for (size_t i = 0; i < data_size; ++i)
+    {
+        ExecTime exec_time = {};
+        if (get_execution_time(argc, argv, &exec_time) < 0)
+            return -1;
+
+        printf("%lg %lg\r", exec_time.user_ms, exec_time.sys_ms);
+        fflush(stdout);
+
+        sys_time[i]  = exec_time.sys_ms;
+        user_time[i] = exec_time.user_ms;
+    }
+
+    return 0;
+}
+
+__always_inline
+static double get_utime(rusage* usage)
+{
+    return (double) usage->ru_utime.tv_sec * 1000.0
+         + (double) usage->ru_utime.tv_usec / 1000.0;
+}
+
+__always_inline
+static double get_stime(rusage* usage)
+{
+    return (double) usage->ru_stime.tv_sec * 1000.0
+         + (double) usage->ru_stime.tv_usec / 1000.0;
+}
+
+static int get_execution_time([[maybe_unused]]int argc, char** argv,
+                                              ExecTime* exec_time)
 {
     pid_t child = fork();
 
@@ -99,34 +136,15 @@ static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
         return -1;
     }
 
-    if (child == 0) /* In child */
-    {
-        int dev_null = open("/dev/null", O_WRONLY);
-
-        if (dev_null < 0)   // On Windows
-            dev_null = open("nul", O_WRONLY);
-
-        // Redirect output to /dev/null or nul
-        dup2(dev_null, STDOUT_FILENO);
-
-        if (execvp(argv[0], (char**)argv) < 0)
-        {
-            perror("Failed to start program");
-            return -1;
-        }
-
-        /* Unreachable */
-        return 0;
-    }
+    if (child == 0)
+        run_child(argc, argv);
 
     rusage usage = {};
     double sum_sys = 0, sum_user = 0;
 
     getrusage(RUSAGE_CHILDREN, &usage);
-    sum_user = (double) usage.ru_utime.tv_sec * 1000.0
-                        + (double) usage.ru_utime.tv_usec / 1000.0;
-    sum_sys = (double) usage.ru_stime.tv_sec * 1000.0
-                        + (double) usage.ru_stime.tv_usec / 1000.0;
+    sum_user = get_utime(&usage);
+    sum_sys  = get_stime(&usage);
     
     int status = 0;
     if (waitpid(child, &status, 0) < 0)
@@ -137,13 +155,29 @@ static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
 
     getrusage(RUSAGE_CHILDREN, &usage);
 
-    exec_time->user_ms = (double) usage.ru_utime.tv_sec  * 1000.0
-                       + (double) usage.ru_utime.tv_usec / 1000.0
-                       - sum_user;
-    exec_time->sys_ms  = (double) usage.ru_stime.tv_sec  * 1000.0
-                       + (double) usage.ru_stime.tv_usec / 1000.0
-                       - sum_sys;
+    exec_time->user_ms = get_utime(&usage) - sum_user;
+    exec_time->sys_ms  = get_stime(&usage) - sum_sys;
 
     return 0;
 }
 
+__attribute__((noreturn))
+static void run_child(int argc, char** argv)
+{
+    int dev_null = open("/dev/null", O_WRONLY);
+
+    if (dev_null < 0)   // On Windows
+        dev_null = open("nul", O_WRONLY);
+
+    // Redirect output to /dev/null or nul
+    dup2(dev_null, STDOUT_FILENO);
+
+    if (execvp(argv[0], argv) < 0)
+    {
+        perror("Failed to start program");
+        exit(1);
+    }
+
+    /* Unreachable */
+    exit(0);
+}
