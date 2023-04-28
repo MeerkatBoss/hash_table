@@ -1,8 +1,10 @@
 #include <math.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "meerkat_assert/asserts.h"
@@ -14,6 +16,8 @@ struct ExecTime
     double user_ms;
     double sys_ms;
 };
+
+static const size_t repeat_count = 10;
 
 static int get_execution_time(int argc, char** argv, ExecTime* exec_time);
 
@@ -87,9 +91,6 @@ int run_test_benchmark(int argc, const char* const* argv,
 
 static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
 {
-    static double sum_sys = 0;
-    static double sum_user = 0;
-
     pid_t child = fork();
 
     if (child < 0)
@@ -98,16 +99,34 @@ static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
         return -1;
     }
 
-    if (child == 0)
+    if (child == 0) /* In child */
     {
+        int dev_null = open("/dev/null", O_WRONLY);
+
+        if (dev_null < 0)   // On Windows
+            dev_null = open("nul", O_WRONLY);
+
+        // Redirect output to /dev/null or nul
+        dup2(dev_null, STDOUT_FILENO);
+
         if (execvp(argv[0], (char**)argv) < 0)
         {
             perror("Failed to start program");
             return -1;
         }
+
         /* Unreachable */
         return 0;
     }
+
+    rusage usage = {};
+    double sum_sys = 0, sum_user = 0;
+
+    getrusage(RUSAGE_CHILDREN, &usage);
+    sum_user = (double) usage.ru_utime.tv_sec * 1000.0
+                        + (double) usage.ru_utime.tv_usec / 1000.0;
+    sum_sys = (double) usage.ru_stime.tv_sec * 1000.0
+                        + (double) usage.ru_stime.tv_usec / 1000.0;
     
     int status = 0;
     if (waitpid(child, &status, 0) < 0)
@@ -116,19 +135,14 @@ static int get_execution_time(int argc, char** argv, ExecTime* exec_time)
         return -1;
     }
 
-    rusage usage = {};
     getrusage(RUSAGE_CHILDREN, &usage);
 
-    exec_time->user_ms = (double) usage.ru_utime.tv_sec * 1000.0
-                        + (double) usage.ru_utime.tv_usec / 1000.0;
-    exec_time->sys_ms = (double) usage.ru_stime.tv_sec * 1000.0
-                        + (double) usage.ru_stime.tv_usec / 1000.0;
-
-    exec_time->user_ms -= sum_user;
-    exec_time->sys_ms  -= sum_sys;
-
-    sum_user += exec_time->user_ms;
-    sum_sys  += exec_time->sys_ms;
+    exec_time->user_ms = (double) usage.ru_utime.tv_sec  * 1000.0
+                       + (double) usage.ru_utime.tv_usec / 1000.0
+                       - sum_user;
+    exec_time->sys_ms  = (double) usage.ru_stime.tv_sec  * 1000.0
+                       + (double) usage.ru_stime.tv_usec / 1000.0
+                       - sum_sys;
 
     return 0;
 }
