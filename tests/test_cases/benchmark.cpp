@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -20,7 +21,8 @@ struct ExecTime
     double sys_ms;
 };
 
-static const size_t repeat_count = 10;
+
+static ssize_t get_repeat(const char* str);
 
 static int fill_data(int argc, char** argv,
                      double* sys_time, double* user_time, size_t data_size);
@@ -29,11 +31,14 @@ static int get_execution_time(int argc, char** argv, ExecTime* exec_time);
 
 static void run_child(int argc, char** argv);
 
+
 int run_test_benchmark(int argc, const char* const* argv,
                        const TestConfig* config)
 {
+    size_t repeat_count = 10;
     FILE *output = NULL;
-    double sys_time[repeat_count], user_time[repeat_count];
+    double *sys_time = NULL, *user_time = NULL;
+
     SAFE_BLOCK_START
     {
         if (config->filename)
@@ -48,6 +53,28 @@ int run_test_benchmark(int argc, const char* const* argv,
 
         ASSERT_GREATER_MESSAGE(
             argc, 1, "No program to benchmark");
+
+        ssize_t parsed = get_repeat(argv[1]);
+        if (parsed >= 0)
+        {
+            argc--;
+            argv++;
+            ASSERT_GREATER_MESSAGE(
+                argc, 1, "No program to benchmark");
+            ASSERT_POSITIVE_MESSAGE(
+                parsed, "Benchmark repeat count must be positive");
+
+            repeat_count = (size_t) parsed;
+        }
+
+        ASSERT_MESSAGE(
+            sys_time = (double*) calloc(repeat_count, sizeof(*sys_time)),
+            action_result != NULL,
+            "Failed to allocate memory");
+        ASSERT_MESSAGE(
+            user_time = (double*) calloc(repeat_count, sizeof(*user_time)),
+            action_result != NULL,
+            "Failed to allocate memory");
 
         -- argc;
         ++ argv;
@@ -91,7 +118,22 @@ int run_test_benchmark(int argc, const char* const* argv,
                     mean_user,  err_user,
                     mean_sys,   err_sys);
 
+    free(sys_time);
+    free(user_time);
+
     return 0;
+}
+
+static ssize_t get_repeat(const char* str)
+{
+    char* end = NULL;
+
+    long parsed = strtol(str, &end, 10);
+
+    if (parsed >= 0 && *end == '\0')
+        return (size_t) parsed;
+
+    return -1;
 }
 
 static int fill_data(int argc, char** argv,

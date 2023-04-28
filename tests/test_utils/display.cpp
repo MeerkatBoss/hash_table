@@ -10,7 +10,7 @@ void progress_bar(size_t done, size_t total, double last_ms)
     const double percentage = (double) done / (double) total;
     
     const size_t fill    = (size_t) round((double)bar_length * percentage);
-    const size_t pending = (size_t) round((double)bar_length / (double)total);
+    const size_t pending = (size_t) ceil((double)bar_length / (double)total);
 
     putchar('[');
     for (size_t i = 0; i < fill; ++i)
