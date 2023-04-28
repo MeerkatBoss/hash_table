@@ -27,6 +27,7 @@ CFLAGS:=-std=c++2a -fPIE -pie $(CMACHINE) $(CWARN)
 BUILDTYPE?=Debug
 
 ARGS?=assets/war_and_peace.txt.data assets/pushkin_vol1-6.txt.data
+BENCHMARK?=10
 HASH_FUNC?=hash_murmur
 
 DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
@@ -117,6 +118,10 @@ run: $(BINDIR)/$(PROJECT)
 
 test: $(BINDIR)/$(PROJECT)_tests
 	 $(BINDIR)/$(PROJECT)_tests $(ARGS)
+
+benchmark: $(BINDIR)/$(PROJECT) $(BINDIR)/$(PROJECT)_tests
+	 $(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\
+		 			$(BINDIR)/$(PROJECT) $(ARGS)
 
 .PHONY: all remake clean cleaner
 
