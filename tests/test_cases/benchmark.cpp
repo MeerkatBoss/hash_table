@@ -10,6 +10,7 @@
 #include "meerkat_assert/asserts.h"
 
 #include "test_utils/math.h"
+#include "test_utils/display.h"
 
 #include "benchmark.h"
 
@@ -82,6 +83,7 @@ int run_test_benchmark(int argc, const char* const* argv,
     err_user  = round_with_exponent(err_user,  user_exp);
     err_total = round_with_exponent(err_total, total_exp);
 
+    putchar('\n');
     fprintf(output, "Total: %lgms (~%lgms)\n"
                     "User:  %lgms (~%lgms)\n"
                     "Sys:   %lgms (~%lgms)\n",
@@ -95,18 +97,23 @@ int run_test_benchmark(int argc, const char* const* argv,
 static int fill_data(int argc, char** argv,
                      double* sys_time, double* user_time, size_t data_size)
 {
+    double last_ms = NAN;
+
     for (size_t i = 0; i < data_size; ++i)
     {
+        progress_bar(i, data_size, last_ms);
+
         ExecTime exec_time = {};
         if (get_execution_time(argc, argv, &exec_time) < 0)
             return -1;
 
-        printf("%lg %lg\r", exec_time.user_ms, exec_time.sys_ms);
-        fflush(stdout);
-
         sys_time[i]  = exec_time.sys_ms;
         user_time[i] = exec_time.user_ms;
+
+        last_ms = sys_time[i] + user_time[i];
     }
+
+    progress_bar(data_size, data_size, NAN);
 
     return 0;
 }
