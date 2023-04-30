@@ -58,9 +58,10 @@ int hash_table_ctor(HashTable* table, const size_t bucket_count)
 
     SAFE_BLOCK_START
     {
-        ASSERT_SIMPLE(
-            buffer = (HashTableEntry*)calloc(capacity, sizeof(*buffer)),
-            action_result != NULL);
+        ASSERT_ZERO(
+            posix_memalign((void**)&buffer,
+                            max_word_length, sizeof(*buffer)*capacity));
+        memset(buffer, 0, sizeof(*buffer)*capacity);
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
@@ -156,7 +157,7 @@ int hash_table_key_increment_counter(HashTable* table, const char* key)
     key_entry = table->free;
     table->free = table->free->next;
     
-    strncpy(key_entry->key, key, max_word_length);
+    memcpy(key_entry->key, key, sizeof(char) * max_word_length);
     // key_entry->key = strdup(key);
     key_entry->count = 1;
     key_entry->next = table->buckets[key_hash].next;
@@ -312,30 +313,19 @@ int hash_table_iterator_get_next(HashTableIterator* it)
     return -1;
 }
 
-__always_inline
-static __m512i str_to_m512(const char* key)
-{
-    __m512i key_vec = _mm512_loadu_si512(key);
-    __m512i zero = _mm512_setzero_epi32();
-    __mmask64 mask = _mm512_cmpeq_epi8_mask(key_vec, zero);
-    size_t len = (unsigned) __builtin_ctzll(mask);
-    mask = (1ull << len) - 1ull;
-    key_vec = _mm512_maskz_mov_epi8(mask, key_vec);
-    return key_vec;
-}
-
-static HashTableEntry* __attribute__((noinline)) get_prev(
+static __attribute__((noinline)) HashTableEntry* get_prev(
                                 const HashTable* table,
                                 const char* key, uint64_t key_hash)
 {
-    __m512i key_vec = str_to_m512(key);
+    __m512i key_vec = _mm512_load_si512(key);
+    // __m512i key_vec = str_to_m512(key);
 
     HashTableEntry* lst_entry = &table->buckets[key_hash];
     HashTableEntry* key_entry = lst_entry->next;
 
     while (key_entry)
     {
-        __m512i cur = *(__m512i*)key_entry->key;
+        __m512i cur = _mm512_load_si512(key_entry->key);
         __mmask64 cmp_mask = _mm512_cmpeq_epi8_mask(key_vec, cur);
         if (!~cmp_mask) break;
 
@@ -371,10 +361,11 @@ static int try_grow(HashTable* table)
 
     SAFE_BLOCK_START
     {
-        ASSERT_SIMPLE(
-                data = (HashTableEntry*)
-                        realloc(table->buckets, new_cap*sizeof(*data)),
-                action_result != NULL);
+        ASSERT_ZERO(
+                posix_memalign((void**)&data,
+                                max_word_length, new_cap*sizeof(*data)));
+        free(table->buckets);
+        memset(data, 0, new_cap*sizeof(*data));
     }
     SAFE_BLOCK_HANDLE_ERRORS
     {
