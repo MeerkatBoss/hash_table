@@ -27,6 +27,7 @@ CFLAGS:=-std=c++2a -fPIE -pie $(CMACHINE) $(CWARN)
 BUILDTYPE?=Debug
 
 ARGS?=assets/war_and_peace.txt.data assets/pushkin_vol1-6.txt.data
+TEST_ARGS?=--help
 BENCHMARK?=10
 HASH_FUNC?=hash_murmur
 
@@ -117,7 +118,7 @@ run: $(BINDIR)/$(PROJECT)
 	@$(BINDIR)/$(PROJECT) $(ARGS)
 
 test: $(BINDIR)/$(PROJECT)_tests
-	@$(BINDIR)/$(PROJECT)_tests $(ARGS)
+	@$(BINDIR)/$(PROJECT)_tests $(TEST_ARGS)
 
 benchmark: $(BINDIR)/$(PROJECT) $(BINDIR)/$(PROJECT)_tests
 	@$(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\

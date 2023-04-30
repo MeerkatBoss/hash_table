@@ -131,7 +131,7 @@ static ssize_t get_repeat(const char* str)
     long parsed = strtol(str, &end, 10);
 
     if (parsed >= 0 && *end == '\0')
-        return (size_t) parsed;
+        return parsed;
 
     return -1;
 }
@@ -219,7 +219,7 @@ static int get_execution_time([[maybe_unused]]int argc, char** argv,
 }
 
 __attribute__((noreturn))
-static void run_child(int argc, char** argv)
+static void run_child([[maybe_unused]] int argc, char** argv)
 {
     int dev_null = open("/dev/null", O_WRONLY);
 

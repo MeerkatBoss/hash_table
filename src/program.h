@@ -15,7 +15,6 @@
 #include "hash_table/hash_table.h"
 #include "table_utils/config.h"
 
-static const size_t hash_table_bucket_count = 19;
 
 struct ProgramState
 {
