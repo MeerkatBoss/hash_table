@@ -85,9 +85,9 @@ int histogram_next_arg(const char* const* str, void* params)
     }
 
     char* end = NULL;
-    size_t size = strtoul(*str, &end, 10);
+    long size = strtol(*str, &end, 10);
 
-    if (*end != '\0')
+    if (*end != '\0' || size <= 0)
     {
         fprintf(stderr, "Error: '%s' is not a valid table size\n", *str);
         return -1;

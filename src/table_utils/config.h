@@ -16,6 +16,8 @@
 
 #include "meerkat_args/argparser.h"
 
+static const size_t hash_table_bucket_count = 7019;
+
 struct ProgramConfig
 {
     const char* filename1;
