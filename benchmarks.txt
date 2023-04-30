@@ -1,7 +1,2 @@
-<<<<<<< HEAD
 baseline: 19300ms (~400ms)
-size_opt: 131ms (~11ms)
-=======
-baseline: 18300ms (~500ms)
 size_opt: 129ms (~6ms)
->>>>>>> chore: retest
