@@ -1,6 +1,6 @@
 CC:=g++
 
-CWARN:=-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
+CWARN:=-ggdb3 -Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
 -Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts\
 -Wconditionally-supported -Wconversion -Wctor-dtor-privacy -Wempty-body\
 -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat-signedness\
@@ -14,7 +14,7 @@ CWARN:=-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
 -Wno-narrowing -Wno-old-style-cast -Wno-varargs -Wstack-protector\
 -Wlarger-than=8192 -Wstack-usage=8192
 
-CDEBUG:=-ggdb3 -fcheck-new -fsized-deallocation -fstack-protector\
+CDEBUG:=-fcheck-new -fsized-deallocation -fstack-protector\
 -fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer\
 -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,${strip \
 }float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,${strip \
@@ -34,10 +34,10 @@ HASH_FUNC?=hash_murmur
 DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
 
 ifeq ($(BUILDTYPE), Release)
-	CFLAGS:=-O2 $(CFLAGS)
+	CFLAGS:=-O0 $(CFLAGS)
 	DEFFLAGS:=-DNDEBUG -DNO_VERBOSE_ASSERTS -DSUPPRESS_LOGS $(DEFFLAGS)
 else
-	CFLAGS:=-O0 $(CDEBUG) $(CFLAGS)
+	CFLAGS:=-O2 $(CDEBUG) $(CFLAGS)
 	DEFFLAGS:=-D_DEBUG $(DEFFLAGS)
 endif
 

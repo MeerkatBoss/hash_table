@@ -22,10 +22,10 @@ struct HashTableEntry
 {
     char key[max_word_length] __attribute__((aligned (max_word_length)));
     size_t count; 
+    int is_free;
 
     HashTableEntry* next;
-    int is_free;
-};
+} __attribute__((aligned (max_word_length)));
 
 struct HashTable
 {
