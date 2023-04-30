@@ -114,14 +114,16 @@ cleaner: clean
 	@rm -rf $(BINDIR)
 
 run: $(BINDIR)/$(PROJECT)
-	$(BINDIR)/$(PROJECT) $(ARGS)
+	@$(BINDIR)/$(PROJECT) $(ARGS)
 
 test: $(BINDIR)/$(PROJECT)_tests
-	 $(BINDIR)/$(PROJECT)_tests $(ARGS)
+	@$(BINDIR)/$(PROJECT)_tests $(ARGS)
 
 benchmark: $(BINDIR)/$(PROJECT) $(BINDIR)/$(PROJECT)_tests
-	 $(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\
+	@$(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\
 		 			$(BINDIR)/$(PROJECT) $(ARGS)
+perf: $(BINDIR)/$(PROJECT)
+	@perf record --call-graph=dwarf -F 500 $(BINDIR)/$(PROJECT) $(ARGS)
 
-.PHONY: all remake clean cleaner
+.PHONY: all remake clean cleaner run test benchmark perf
 
