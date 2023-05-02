@@ -170,7 +170,7 @@ double get_cosine_similarity(const HashTable* src1, const HashTable* src2)
     } while (hash_table_iterator_get_next(&it) == 0);
 
     len1 = sqrt(len1);
-    double len2 = get_vector_length(src1);
+    double len2 = get_vector_length(src2);
     
     return dot_product / (len1 * len2);
 }

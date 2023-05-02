@@ -1,6 +1,6 @@
 CC:=g++
 
-CWARN:=-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
+CWARN:=-ggdb3 -Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
 -Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts\
 -Wconditionally-supported -Wconversion -Wctor-dtor-privacy -Wempty-body\
 -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat-signedness\
@@ -14,7 +14,7 @@ CWARN:=-Wall -Wextra -Weffc++ -Waggressive-loop-optimizations -Wc++14-compat\
 -Wno-narrowing -Wno-old-style-cast -Wno-varargs -Wstack-protector\
 -Wlarger-than=8192 -Wstack-usage=8192
 
-CDEBUG:=-ggdb3 -fcheck-new -fsized-deallocation -fstack-protector\
+CDEBUG:=-fcheck-new -fsized-deallocation -fstack-protector\
 -fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer\
 -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,${strip \
 }float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,${strip \
@@ -123,7 +123,7 @@ benchmark: $(BINDIR)/$(PROJECT) $(BINDIR)/$(PROJECT)_tests
 	@$(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\
 		 			$(BINDIR)/$(PROJECT) $(ARGS)
 perf: $(BINDIR)/$(PROJECT)
-	@perf record --call-graph=dwarf -F 500 $(BINDIR)/$(PROJECT) $(ARGS)
+	@perf record --call-graph=dwarf -F 2000 $(BINDIR)/$(PROJECT) $(ARGS)
 
 .PHONY: all remake clean cleaner run test benchmark perf
 
