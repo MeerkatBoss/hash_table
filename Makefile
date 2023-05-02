@@ -29,7 +29,7 @@ BUILDTYPE?=Debug
 ARGS?=assets/war_and_peace.txt.data assets/pushkin_vol1-6.txt.data
 TEST_ARGS?=--help
 BENCHMARK?=10
-HASH_FUNC?=hash_murmur
+HASH_FUNC?=asm_hash_murmur
 
 DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
 
@@ -54,14 +54,18 @@ OBJDIR 	:= $(BUILDDIR)/obj
 BINDIR	:= $(BUILDDIR)/bin
 
 SRCEXT	:= cpp
+ASMEXT	:= asm
 HEADEXT	:= h
 OBJEXT	:= o
 
 
 SOURCES := $(shell find $(SRCDIR) -type f -name "*.$(SRCEXT)")
+ASMSRCS := $(shell find $(SRCDIR) -type f -name "*.$(ASMEXT)")
 TESTS	:= $(shell find $(TESTDIR) -type f -name "*$(SRCEXT)")
 LIBS	:= $(patsubst $(LIBDIR)/lib%.a, %, $(shell find $(LIBDIR) -type f))
 OBJECTS	:= $(patsubst $(SRCDIR)/%,$(OBJDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+OBJECTS := $(OBJECTS)\
+		   $(patsubst $(SRCDIR)/%,$(OBJDIR)/%,$(ASMSRCS:.$(ASMEXT)=.$(OBJEXT)))
 TESTOBJS:= $(patsubst %,$(OBJDIR)/%,$(TESTS:.$(SRCEXT)=.$(OBJEXT)))
 
 INCFLAGS:= -I$(SRCDIR) -I$(INCDIR)
@@ -97,6 +101,11 @@ $(OBJDIR)/$(TESTDIR)/%.$(OBJEXT): $(TESTDIR)/%.$(SRCEXT)
 $(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) $(INCFLAGS) $(DEFFLAGS) -c $< -o $@
+
+# Build asm objects
+$(OBJDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(ASMEXT)
+	@mkdir -p $(dir $@)
+	@nasm -g -f elf64 -F dwarf $(INCFLAGS) $< -o $@
 
 # Build project binary
 $(BINDIR)/$(PROJECT): $(OBJECTS)

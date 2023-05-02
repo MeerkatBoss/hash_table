@@ -5,9 +5,10 @@
 #include "meerkat_assert/asserts.h"
 
 #include "hashes/hash_functions.h"
+#include "hashes/asm_hash.h"
 
 #ifndef HASH_FUNCTION
-#define HASH_FUNCTION(key) hash_always_one(key)
+#define HASH_FUNCTION(key) asm_hash_murmur(key)
 #endif
 
 #include "hash_table.h"
