@@ -318,7 +318,6 @@ static __attribute__((noinline)) HashTableEntry* get_prev(
                                 const char* key, uint64_t key_hash)
 {
     __m512i key_vec = _mm512_load_si512(key);
-    // __m512i key_vec = str_to_m512(key);
 
     HashTableEntry* lst_entry = &table->buckets[key_hash];
     HashTableEntry* key_entry = lst_entry->next;
