@@ -1,3 +1,4 @@
 baseline: 18300ms (~500ms)
 size_opt: 129ms (~6ms)
 simd_opt: 77ms (~9ms)
+asm_opt:  71ms (~12ms)
