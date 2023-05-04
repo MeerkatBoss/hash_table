@@ -133,7 +133,7 @@ benchmark: $(BINDIR)/$(PROJECT) $(BINDIR)/$(PROJECT)_tests
 	@$(BINDIR)/$(PROJECT)_tests benchmark $(BENCHMARK)\
 		 			$(BINDIR)/$(PROJECT) $(ARGS)
 perf: $(BINDIR)/$(PROJECT)
-	@perf record --call-graph=dwarf -F 2000 $(BINDIR)/$(PROJECT) $(ARGS)
+	@perf record --call-graph=dwarf $(BINDIR)/$(PROJECT) $(ARGS)
 
 .PHONY: all remake clean cleaner run test benchmark perf
 
