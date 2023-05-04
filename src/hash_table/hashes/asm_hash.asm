@@ -4,77 +4,36 @@ global		asm_hash_murmur:function
 
 section		.text
 
+SEED		equ	0x8B72E9FB7FAA60FD
+MULT		equ	0xC6A4A7935BD1E995
+
 ;====================================================================================================
 ; Calculate hash function using SIMD
 ;====================================================================================================
-; Entry:	RDI	- (64-aligned) address of string
+; Entry:	RDI	- (8-aligned) address of string
 ; Exit:		RAX	- hash value
 ; Destroys:	
 ;====================================================================================================
 asm_hash_murmur:
-		mov			rax,			0x8B72E9FB7FAA60FD
-		vpbroadcastq		zmm0,			rax				; Seed in zmm0
-		mov			rax,			0xC6A4A7935BD1E995
-		vpbroadcastq		zmm1,			rax				; Multiplicand in zmm1
-		vpxorq			zmm2,			zmm2,			zmm2	; Zero in zmm2
-		; tmp = mult * 64
-		vpshldq			zmm3,			zmm1,			zmm2,		6
+		mov			r8,			MULT			; Multiplicand in r8
+		mov			rax,			SEED ^ (MULT << 6)	; Hash in rax
 
-		; hash = seed ^ (mult * 64)
-		vpxorq			zmm0,			zmm0,			zmm3
+		%assign 		offset			0
+		%rep			8
 
-		; chars (zmm3) = [rdi] * mult
-		vpmullq			zmm3,			zmm1, ZWORD 		[rdi]
-		; chars ^= chars >> 47
-		vpshrdq			zmm4,			zmm3,			zmm2,		47
-		vpxorq			zmm3,			zmm3,			zmm4
-		; chars *= mult
-		vpmullq			zmm3,			zmm3,			zmm1
+		mov			rdx, QWORD		[rdi + 8*offset]	; Loaded value in rdx
+		imul			rdx,			r8			; value *= MULT
+		mov			rsi,			rcx
+		shr			rsi,			47
+		xor			rdx,			rsi			; value ^= value << 47
+		imul			rdx,			r8			; value *= MULT
 
-		; Load permutation mask into zmm4
-		align 64
-		vmovdqa64		zmm4, ZWORD 		[PermuteMask]
-		
-		; Incorporate first 7*8 = 56 characters into hash
-		%rep 7
-		; hash ^= char
-		vpxorq			zmm0,			zmm0,			zmm3
-		; hash *= mult
-		vpmullq			zmm0,			zmm0,			zmm1
-		; next char
-		vpermq			zmm3,			zmm3,			zmm4
+		xor			rax,			rdx
+		imul			rax,			r8			; Incorporate character
+
+		%assign			offset			offset + 1
 		%endrep
 
-		; Incorporate remaining 8 characters
-		; hash ^= char
-		vpxorq			zmm0,			zmm0,			zmm3
-		; hash *= mult
-		vpmullq			zmm0,			zmm0,			zmm1
-
-		; Last mix of hash
-		; hash ^= hash >> 47
-		vpshrdq			zmm3,			zmm0,			zmm2,		47
-		vpxorq			zmm0,			zmm0,			zmm3
-		; hash *= mult
-		vpmullq			zmm0,			zmm0,			zmm1
-		; hash ^= hash >> 47
-		vpshrdq			zmm3,			zmm0,			zmm2,		47
-		vpxorq			zmm0,			zmm0,			zmm3
-
-		vzeroupper
-		vmovq			rax,			xmm0
 		ret
 ;====================================================================================================
-		
 
-section		.rodata
-
-align 64,	db 0
-PermuteMask	dq 1
-		dq 2
-		dq 3
-		dq 4
-		dq 5
-		dq 6
-		dq 7
-		dq 0
