@@ -29,7 +29,7 @@ BUILDTYPE?=Debug
 ARGS?=assets/war_and_peace.txt.data assets/pushkin_vol1-6.txt.data
 TEST_ARGS?=--help
 BENCHMARK?=10
-HASH_FUNC?=asm_hash_murmur
+HASH_FUNC?=hash_murmur
 
 DEFFLAGS:=-DHASH_FUNCTION=$(HASH_FUNC)
 
