@@ -33,9 +33,12 @@ The program performed the following actions:
 
 Cosine similarity between texts was calculated using the formula:
 
-$$ cos(\varphi) = \frac{\sum\limits_{w \in A} \left(f_A(w) \cdot f_B(w)\right)}
+$$
+cos(\varphi) = \frac{\sum\limits_{w \in A} \left(f_A(w) \cdot f_B(w)\right)}
                         {\sqrt{\sum\limits_{w \in A} f_A^2(w)} \cdot
-                         \sqrt{\sum\limits_{w \in B} f_B^2(w)}} $$
+                         \sqrt{\sum\limits_{w \in B} f_B^2(w)}}
+$$
+
 Where:
 - $A$ - set of words in first text
 - $B$ - set of words in second text
