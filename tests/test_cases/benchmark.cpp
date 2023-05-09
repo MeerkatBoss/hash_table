@@ -140,22 +140,30 @@ static int fill_data(int argc, char** argv,
                      double* sys_time, double* user_time, size_t data_size)
 {
     double last_ms = NAN;
+    const size_t repeat = 5;
 
     for (size_t i = 0; i < data_size; ++i)
     {
-        progress_bar(i, data_size, last_ms);
+        double sum_sys = 0, sum_user = 0;
+        for (size_t j = 0; j < repeat; j++)
+        {
+            progress_bar(i*repeat + j, data_size * repeat, last_ms);
 
-        ExecTime exec_time = {};
-        if (get_execution_time(argc, argv, &exec_time) < 0)
-            return -1;
+            ExecTime exec_time = {};
+            if (get_execution_time(argc, argv, &exec_time) < 0)
+                return -1;
+            
+            sum_sys  += exec_time.sys_ms;
+            sum_user += exec_time.user_ms;
 
-        sys_time[i]  = exec_time.sys_ms;
-        user_time[i] = exec_time.user_ms;
+            last_ms = exec_time.sys_ms + exec_time.user_ms;
+        }
 
-        last_ms = sys_time[i] + user_time[i];
+        sys_time[i]  = sum_sys  / repeat;
+        user_time[i] = sum_user / repeat;
     }
 
-    progress_bar(data_size, data_size, NAN);
+    progress_bar(data_size * repeat, data_size*repeat, NAN);
 
     return 0;
 }
