@@ -1,1 +1,2 @@
 baseline: 19300ms (~400ms)
+size_opt: 130.6ms (~3.1ms)
