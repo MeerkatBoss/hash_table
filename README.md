@@ -68,9 +68,11 @@ unix `perf` tool.
 
 The results of first tests were as follows:
 
-| Program version | Average time (ms) |
-| --- | --- |
-| baseline | 18300 $\pm$ 300 |
+| Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
+| --- | --- | --- | --- |
+| baseline | 19300 $\pm$ 400            | 1            | N/A           |
+
+**Note:** *Baseline performance gain is taken as 1 for convenience*
 
 | ![baseline hotspots](research/perf/hotspots_1.png)|
 | --- |
@@ -87,11 +89,10 @@ first optimization was to increase hash table size from 19 to 7019.
 ### **Second version tests**
 
 The results of testing the [optimized version](https://github.com/MeerkatBoss/hash_table/tree/table_size_opt) were following:
-
-| Program version | Average time (ms) | Absolute performance gain (times) |
-| --- | --- | --- |
-| baseline | 18300 $\pm$ 300 | 1 (baseline) |
-| table size optimization | 129 $\pm$ 6 | 141 $\pm$ 9| 
+| Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
+| --- | --- | --- | --- |
+| baseline | 19300 $\pm$ 400            | 1            | N/A           |
+| table size optimization | 130 $\pm$ 3 | 148 $\pm$ 5  | 148 $\pm$ 5   |  
 
 | ![v2 hotspots](research/perf/hotspots_2.png)|
 | --- |
@@ -126,9 +127,9 @@ were following:
 
 | Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
 | --- | --- | --- | --- |
-| baseline | 18300 $\pm$ 300 | 1 (baseline) | N/A |
-| table size optimization | 129 $\pm$ 6 | 141 $\pm$ 9 | 141 $\pm$ 9| 
-| SIMD optimization | 77 $\pm$ 9 | 240 $\pm$ 40 | 1.7 $\pm$ 0.3 |
+| baseline | 19300 $\pm$ 400            | 1            | N/A           |
+| table size optimization | 130 $\pm$ 3 | 148 $\pm$ 5  | 148 $\pm$ 5   |  
+| SIMD optimization | 78 $\pm$ 5        | 250 $\pm$ 17 | 1.7 $\pm$ 0.1 |
 
 | ![v3 hotspots](research/perf/hotspots_3.png)|
 | --- |
@@ -150,11 +151,11 @@ The test results for these versions are as follows:
 
 | Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
 | --- | --- | --- | --- |
-| baseline | 18300 $\pm$ 300 | 1 (baseline) | N/A |
-| table size optimization | 129 $\pm$ 6 | 141 $\pm$ 9 | 141 $\pm$ 9| 
-| SIMD optimization | 77 $\pm$ 9 | 240 $\pm$ 40 | 1.7 $\pm$ 0.3 |
-| asm optimization | 71 $\pm$ 12 | 250 $\pm$ 50 | 1.1 $\pm$ 0.3 |
-| inline asm optimization | 74 $\pm$ 11 | 250 $\pm$ 40 | 1.0 $\pm$ 0.3 |
+| baseline | 19300 $\pm$ 400            | 1            | N/A           |
+| table size optimization | 130 $\pm$ 3 | 148 $\pm$ 5  | 148 $\pm$ 5   |  
+| SIMD optimization | 78 $\pm$ 5        | 250 $\pm$ 17 | 1.7 $\pm$ 0.1 |
+| asm optimization | 81 $\pm$ 6         | 240 $\pm$ 18 | 0.9 $\pm$ 0.1 | 
+| inline asm optimization | 72 $\pm$ 6  | 270 $\pm$ 20 | 1.1 $\pm$ 0.1 |
 
 | ![v4 hotspots](research/perf/hotspots_4.png)|
 | --- |
