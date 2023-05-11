@@ -19,14 +19,14 @@ Where:
 - $A$ - set of words in first text
 - $B$ - set of words in second text
 - $f_A(w)$ - frequency of word $w$ in first text
-- $f_B(w)$ - frequency fo word $w$ in second text
+- $f_B(w)$ - frequency of word $w$ in second text
 
 Program compared the following two texts:
 [novel "War and Peace" by L. Tolstoy](assets/war_and_peace.txt) and
 [collection of works by A. Pushkin (volumes 1-6)](assets/pushkin_vol1-6.txt).
 
-The program was implemented using the hash table data structure. The performance
-of the program relied heavily on the efficient implementation of hash table.
+The program was implemented using the hash table data structure. The program
+performance relied heavily on the efficient implementation of hash table.
 
 ### **Hash table**
 
@@ -254,8 +254,8 @@ which a function cannot be efficiently implemented in pure C or the compiler
 fails to optimize it. The MurmurHash algorithm was designed to be efficiently
 implemented in C. This makes it hard to optimize using assembly language.
 
-However, the inline assembly allows to calculate hash without calling
-another function, which saves time on indirect jumps, happening when called
+However, the inline assembly allows to calculate hash without additional
+function call, which saves time on indirect jumps, happening when called
 function finishes its execution. This also increases code locality, as
 code used for calculating the hash, and the code using said hash are close to
 each other.
@@ -273,5 +273,5 @@ requirements for input format can be easily satisfied and program portability
 is not required.
 
 Assembly-based optimizations cannot be applied universally. However, if the
-performance affecting function can be optimized using assembly, the usage of
+performance-affecting function can be optimized using assembly, the usage of
 inline assembly can significantly shorten the program execution time.
