@@ -1,10 +1,10 @@
-# Hash Table
+# Hash Table Optimizations
 
 ## Introduction
 
 This research focuses on the optimizations of the following algorithm:
 1. Load words from text files
-2. Calculate cosine similarity of two texts
+2. Calculate cosine similarity of two texts interpreted as sets of words
 3. Count total number of distinct words unique to each text
 
 Cosine similarity between texts is calculated using the formula:
@@ -53,7 +53,7 @@ is represented with orange arrows).
 | --- |
 | *Figure 1. Example of a hash table.* |
 
-8 entries are distributed across 9 buckets. Two chains are formed due to
+Eight entries are distributed across nine buckets. Two chains are formed due to
 collisions: ('word3' -> 'word2' and 'word8' -> 'word7' -> 'word5'). No entries
 are stored in buckets 2, 3, 5, and 8, because no keys correspond to these hashes.
 
@@ -68,23 +68,27 @@ be found [here](https://github.com/MeerkatBoss/hash_table/blob/baseline/src/hash
 - Number of buckets in table was a prime number (19)
 - Chaining was implemented using linked lists
 - Hash table used [MurmurHash](https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp)
-    hash function
+    as a hash function
 
 ### **Testing methods**
 
-The program described above performs accesses the hash table often. Before
-inserting each word in hash table, the program must first check whether or not
-this word is already stored. Additionally, the calculation of cosine similarity
-and counting of distinct words required querying each word from one hash table
-in another. Based on this information we can expect that program execution time
-will be mostly affected by the efficiency of search algorithm.
+The program described above accesses the hash table often. Before inserting each
+word in hash table, the program should first check whether or not this word is
+already stored. Additionally, the calculation of cosine similarity and counting
+of distinct words required querying each word from one hash table in another.
+Based on this information we can expect that program execution time will be
+mostly affected by the efficiency of search algorithm.
+
+The size of hash table was deliberately chosen to be too small for the task in
+attempt to demonstrate the importance of choosing the appropriate hash table
+size for given task.
 
 Program performance was recorded by executing it as a child process and
 calling `getrusage()` function, which allows to obtain verbose information about
 process execution, including its execution time.
 
-The testing function implementation can be found
-[here](tests/test_cases/benchmark.cpp).
+The testing function implementation can be found [here
+](tests/test_cases/benchmark.cpp).
 
 Program was executed 5 times and the average of execution times was taken.
 This test was repeated 10 times, the average and standard deviation of results
@@ -134,7 +138,7 @@ bucket. This function compares each key in bucket with the searched key and
 returns the node preceding the found one.
 
 83.7% of program execution time is spent on calls to `__strcmp_avx2` function,
-which indicates that `find_parent_node` needs to compare the given keys with
+which indicates that `find_parent_node` needs to compare the given key with
 many keys stored in the bucket. This means that the bucket sizes are very large,
 because the size of hash table is much smaller than the number of keys stored
 in it.
@@ -160,7 +164,10 @@ The results of testing the optimized version were following:
 | *Figure 5. Second version flame graph* |
 
 Now only 42.7% of program execution time is spent on calls to `strcmp`, which
-allows to perform optimizations of this function. 
+allows to perform optimizations of this function.
+
+From now on absolute performance gain will be calculated relative to the second
+version, as the baseline version was too inefficient.
 
 ### **Third version tests**
 
@@ -190,9 +197,8 @@ were following:
 
 | Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
 | --- | --- | --- | --- |
-| baseline | 19300 $\pm$ 400            | 1            | N/A           |
-| table size optimization | 130 $\pm$ 3 | 148 $\pm$ 5  | 148 $\pm$ 5   |  
-| SIMD optimization | 78 $\pm$ 5        | 250 $\pm$ 17 | 1.7 $\pm$ 0.1 |
+| table size optimization | 130 $\pm$ 3 | 1                  | N/A           |  
+| SIMD optimization       | 78 $\pm$ 5  | 1.7 $\pm$ 0.1      | 1.7 $\pm$ 0.1 |
 
 | ![v3 hotspots](research/perf/hotspots_3.png)|
 | --- |
@@ -218,19 +224,20 @@ operation, which cannot be optimized.
 After optimizing `__strcmp_avx2` the only remaining function to optimize is
 `hash_murmur`. In the [fourth version
 ](https://github.com/MeerkatBoss/hash_table/blob/hash_asm_opt/src/hash_table/hashes/asm_hash.asm)
-this function was rewritten in pure assembly, and in the [fifth
-](https://github.com/MeerkatBoss/hash_table/blob/568c61a3ae637403896ce46b457acafc0ae2ab75/src/hash_table/hash_table.cpp#L38)
-with inline assembly, to allow function inlining.
+this function was rewritten in pure assembly language (NASM dialect), and in the
+[fifth](https://github.com/MeerkatBoss/hash_table/blob/568c61a3ae637403896ce46b457acafc0ae2ab75/src/hash_table/hash_table.cpp#L38)
+using [GCC inline assembly language
+](https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html),
+to allow function inlining.
 
 The test results for these versions are as follows:
 
 | Program version | Average time (ms) | Absolute performance gain (times) | Relative performance gain (times) |
 | --- | --- | --- | --- |
-| baseline | 19300 $\pm$ 400            | 1            | N/A           |
-| table size optimization | 130 $\pm$ 3 | 148 $\pm$ 5  | 148 $\pm$ 5   |  
-| SIMD optimization | 78 $\pm$ 5        | 250 $\pm$ 17 | 1.7 $\pm$ 0.1 |
-| asm optimization | 81 $\pm$ 6         | 240 $\pm$ 18 | 0.9 $\pm$ 0.1 | 
-| inline asm optimization | 72 $\pm$ 6  | 270 $\pm$ 20 | 1.1 $\pm$ 0.1 |
+| table size optimization | 130 $\pm$ 3 | 1                  | N/A           |  
+| SIMD optimization       | 78 $\pm$ 5  | 1.7 $\pm$ 0.1      | 1.7 $\pm$ 0.1 |
+| asm optimization        | 81 $\pm$ 6  | 1.6 $\pm$ 0.1      | 0.9 $\pm$ 0.1 | 
+| inline asm optimization | 72 $\pm$ 6  | 1.8 $\pm$ 0.2      | 1.1 $\pm$ 0.1 |
 
 The initial assembly optimization slightly slowed the program down, but with the
 help of inline assembly the program became faster again.
@@ -254,11 +261,11 @@ which a function cannot be efficiently implemented in pure C or the compiler
 fails to optimize it. The MurmurHash algorithm was designed to be efficiently
 implemented in C. This makes it hard to optimize using assembly language.
 
-However, the inline assembly allows to calculate hash without additional
+However, the inline assembly language allows to calculate hash without additional
 function call, which saves time on indirect jumps, happening when called
 function finishes its execution. This also increases code locality, as
-code used for calculating the hash, and the code using said hash are close to
-each other.
+code used for calculating the hash, and the code using said hash are located
+closer to each other.
 
 ## Conclusions
 
@@ -270,8 +277,13 @@ bucket sizes.
 Usage of SIMD restricts the format of input data and makes program non-portable,
 but provides a significant performance gain and can be used in cases, where
 requirements for input format can be easily satisfied and program portability
-is not required.
+is not required. Additionally, some of the most used algorithms are implemented
+in SIMD. For example, hash table might use [Cyclic Redundancy Checks (CRC)
+](https://datatracker.ietf.org/doc/html/rfc3385) as a hash function. This
+algorithm is implemented with instructions from SSE4.2 instruction set, thus
+allowing to calculate the hash function much faster.
 
 Assembly-based optimizations cannot be applied universally. However, if the
-performance-affecting function can be optimized using assembly, the usage of
-inline assembly can significantly shorten the program execution time.
+performance-affecting function can be optimized using assembly language, the
+usage of inline assembly language can significantly shorten the program
+execution time.
